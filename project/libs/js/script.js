@@ -1,10 +1,26 @@
 document.addEventListener("DOMContentLoaded", function () {
+  let placeSearch,
+    placeMarkers = [];
   function hidePreLoader() {
     const preLoader = document.getElementById("pre-loader");
     if (preLoader) {
       preLoader.style.display = "none";
     }
   }
+
+  function loadGoogleMapsAPI(callback) {
+    if (typeof google !== "undefined") {
+      callback();
+    } else {
+      const checkGoogleMaps = setInterval(() => {
+        if (typeof google !== "undefined") {
+          clearInterval(checkGoogleMaps);
+          callback();
+        }
+      }, 100);
+    }
+  }
+
   function initMap() {
     map = L.map("map").setView([20, 0], 2);
 
@@ -14,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
         attribution: "© OpenStreetMap contributors",
       }
     );
+    loadGoogleMapsAPI(initPlaceSearch);
     const satelliteTileLayer = L.tileLayer(
       "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
       {
@@ -27,6 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "Satellite View": satelliteTileLayer,
     };
     L.control.layers(baseLayers).addTo(map);
+
     if (location.protocol === "https:" || location.hostname === "localhost") {
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(success, error);
@@ -53,12 +71,85 @@ document.addEventListener("DOMContentLoaded", function () {
           hidePreLoader();
         });
     }
+
     function error(err) {
       if (err.code === 1) {
         alert("Please allow geolocation access");
       } else {
         alert("Cannot get current location");
       }
+    }
+
+    function initPlaceSearch() {
+      const input = document.getElementById("placeSearch");
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+        fields: ["geometry", "name"],
+      });
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+          alert("No details available for the selected place.");
+          return;
+        }
+
+        const { lat, lng } = place.geometry.location;
+        const name = place.name;
+
+        map.setView([lat(), lng()], 13);
+        placeMarkers.forEach((marker) => map.removeLayer(marker));
+        placeMarkers = [];
+        const cityMarker = L.marker([lat(), lng()])
+          .bindPopup(`<b>${name}</b>`)
+          .addTo(map);
+        fetchNearbyAttractions(lat(), lng());
+      });
+    }
+
+    function fetchNearbyAttractions(lat, lng) {
+      const service = new google.maps.places.PlacesService(
+        document.createElement("div")
+      );
+
+      const request = {
+        location: new google.maps.LatLng(lat, lng),
+        radius: 50000,
+        type: ["tourist_attraction"],
+      };
+
+      service.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          placeMarkers.forEach((marker) => map.removeLayer(marker));
+          placeMarkers = [];
+
+          results.forEach((place) => {
+            const marker = L.marker([
+              place.geometry.location.lat(),
+              place.geometry.location.lng(),
+            ])
+              .bindPopup(
+                `
+                <b>${place.name}</b><br>
+                ${place.vicinity || ""}<br>
+                ${
+                  place.photos && place.photos.length > 0
+                    ? `<img src="${place.photos[0].getUrl({
+                        maxWidth: 200,
+                      })}" alt="${
+                        place.name
+                      }" style="max-width: 100%; height: auto;">`
+                    : "No image available"
+                }
+              `
+              )
+              .addTo(map);
+
+            placeMarkers.push(marker);
+          });
+        } else {
+          alert("No attractions found in the selected area.");
+        }
+      });
     }
   }
 
@@ -100,6 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
     option.selected = true;
     countrySelect.appendChild(option);
   }
+
   function fetchCountryList() {
     fetch("libs/php/getCountryList.php")
       .then((response) => response.json())
@@ -114,6 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => console.error("Error fetching country list:", error));
   }
+
   fetchCountryList();
   initMap();
 });

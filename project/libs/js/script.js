@@ -1,5 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
   let placeSearch,
+    userMarker,
+    userCircle,
+    countryMarker,
+    countryCircle,
+    easyButton,
     placeMarkers = [];
   function hidePreLoader() {
     const preLoader = document.getElementById("pre-loader");
@@ -172,6 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const countryCode = data.data[0].countryCode;
 
           addCurrentLocationToDropdown(country, countryCode);
+          return fetchCountryInfo(countryCode, lat, lng);
         } else {
           console.error("No nearby places found:", data);
           return Promise.reject("No nearby places found");
@@ -207,6 +213,127 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => console.error("Error fetching country list:", error));
   }
 
+  function fetchCountryInfo(countryCode, lat = null, lng = null) {
+    fetch("libs/php/countryinfo.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        country: countryCode,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status.name === "ok") {
+          const country = result.data[0];
+          const capital = country.capital;
+          const countryName = country.countryName;
+
+          if (lat && lng) {
+            updateMap(lat, lng, country, true);
+          } else {
+            const countryLat = (country.north + country.south) / 2;
+            const countryLon = (country.east + country.west) / 2;
+            lat = countryLat;
+            lng = countryLon;
+
+            updateMap(countryLat, countryLon, country, false);
+          }
+          updateEasyButton(country);
+        }
+      })
+      .catch((error) => console.error("Error fetching country info:", error));
+  }
+  function updateMap(lat, lon, isCurrentLocation) {
+    if (isCurrentLocation) {
+      if (userMarker) {
+        map.removeLayer(userMarker);
+        map.removeLayer(userCircle);
+      }
+
+      map.setView([lat, lon], 20);
+    } else {
+      if (countryMarker) {
+        map.removeLayer(countryMarker);
+        map.removeLayer(countryCircle);
+      }
+
+      map.setView([lat, lon], 5);
+    }
+  }
+  function updateEasyButton(country) {
+    if (easyButton) {
+      easyButton.remove();
+    }
+
+    easyButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-info",
+          icon: "fa-solid fa-info",
+          title: "Country Information",
+          onClick: function (btn, map) {
+            const modalContent = `
+                        <div class="w-50 h-50">
+                            <table class="table">
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-street-view fa-lg text-success"></i></td>
+                                    <td><strong>Continent</strong></td>
+                                    <td>${country.continentName}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-heart fa-lg text-success"></i></td>
+                                    <td><strong>Capital</strong></td>
+                                    <td>${country.capital}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-language fa-lg text-success"></i></td>
+                                    <td><strong>Language</strong></td>
+                                    <td>${country.languages}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-users fa-lg text-success"></i></td>
+                                    <td><strong>Population</strong></td>
+                                    <td>${numeral(country.population).format(
+                                      "0,0"
+                                    )}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-globe fa-lg text-success"></i></td>
+                                    <td><strong>Area</strong></td>
+                                    <td>${numeral(country.areaInSqKm).format(
+                                      "0,0"
+                                    )}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-info fa-lg text-success"></i></td>
+                                    <td><strong>Country Code</strong></td>
+                                    <td>${country.countryCode}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center"><i class="fa fa-money fa-lg text-success"></i></td>
+                                    <td><strong>Currency Code</strong></td>
+                                    <td>${country.currencyCode}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    `;
+            document.getElementById("modalContent").innerHTML = modalContent;
+            new bootstrap.Modal(document.getElementById("exampleModal")).show();
+          },
+        },
+      ],
+    }).addTo(map);
+  }
+  document
+    .getElementById("countrySelect")
+    .addEventListener("change", function (event) {
+      const selectedCountryCode = event.target.value;
+      if (selectedCountryCode) {
+        fetchCountryInfo(selectedCountryCode);
+      }
+    });
   fetchCountryList();
   initMap();
 });

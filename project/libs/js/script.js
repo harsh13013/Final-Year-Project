@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", function () {
     countryMarker,
     countryCircle,
     easyButton,
+    wikiButton,
+    countryBorderLayer,
     placeMarkers = [];
   function hidePreLoader() {
     const preLoader = document.getElementById("pre-loader");
@@ -112,49 +114,95 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function fetchNearbyAttractions(lat, lng) {
-      const service = new google.maps.places.PlacesService(
-        document.createElement("div")
-      );
+      const apiKey = "5ae2e3f221c38a28845f05b63374bf6fb80ff0ac34f52dfa39109360";
+      const radius = 50000;
+      const url = `https://api.opentripmap.com/0.1/en/places/radius?radius=${radius}&lon=${lng}&lat=${lat}&apikey=${apiKey}`;
 
-      const request = {
-        location: new google.maps.LatLng(lat, lng),
-        radius: 50000,
-        type: ["tourist_attraction"],
-      };
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.features && data.features.length > 0) {
+            placeMarkers.forEach((marker) => map.removeLayer(marker));
+            placeMarkers = [];
 
-      service.nearbySearch(request, (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-          placeMarkers.forEach((marker) => map.removeLayer(marker));
-          placeMarkers = [];
+            data.features.forEach((place) => {
+              const { name, xid, kinds } = place.properties;
+              const [placeLng, placeLat] = place.geometry.coordinates;
 
-          results.forEach((place) => {
-            const marker = L.marker([
-              place.geometry.location.lat(),
-              place.geometry.location.lng(),
-            ])
-              .bindPopup(
-                `
-                <b>${place.name}</b><br>
-                ${place.vicinity || ""}<br>
-                ${
-                  place.photos && place.photos.length > 0
-                    ? `<img src="${place.photos[0].getUrl({
-                        maxWidth: 200,
-                      })}" alt="${
-                        place.name
-                      }" style="max-width: 100%; height: auto;">`
-                    : "No image available"
-                }
-              `
-              )
-              .addTo(map);
+              const marker = L.marker([placeLat, placeLng], {
+                icon: L.icon({
+                  iconUrl: getCategoryIcon(kinds),
+                  iconSize: [32, 32],
+                }),
+              });
 
-            placeMarkers.push(marker);
-          });
-        } else {
-          alert("No attractions found in the selected area.");
-        }
-      });
+              marker
+                .on("mouseover", (e) => {
+                  const hoverTooltip = L.tooltip({
+                    permanent: false,
+                    direction: "top",
+                    className: "custom-tooltip",
+                  })
+                    .setContent(`<b>${name}</b>`)
+                    .setLatLng(e.latlng);
+
+                  marker.bindTooltip(hoverTooltip).openTooltip();
+                })
+                .on("mouseout", () => {
+                  marker.closeTooltip();
+                });
+
+              marker.on("click", () => {
+                fetch(
+                  `https://api.opentripmap.com/0.1/en/places/xid/${xid}?apikey=${apiKey}`
+                )
+                  .then((res) => res.json())
+                  .then((details) => {
+                    const imageUrl = details.preview
+                      ? details.preview.source
+                      : null;
+
+                    marker
+                      .bindPopup(
+                        `<b>${name}</b><br>
+                       ${details.kinds || "Category not available"}<br>
+                       ${
+                         imageUrl
+                           ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto;">`
+                           : ""
+                       }
+                       <p>${
+                         details.wikipedia_extracts
+                           ? details.wikipedia_extracts.text
+                           : "No additional information available."
+                       }</p>
+                       <a href="https://opentripmap.com/en/places/${xid}" target="_blank">More Info</a>`
+                      )
+                      .openPopup();
+                  })
+                  .catch((err) =>
+                    console.error("Error fetching place details:", err)
+                  );
+              });
+
+              marker.addTo(map);
+              placeMarkers.push(marker);
+            });
+          } else {
+            alert("No attractions found in the selected area.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching attractions:", error);
+          alert("Failed to fetch attractions. Please try again later.");
+        });
+    }
+    function getCategoryIcon(kinds) {
+      if (kinds.includes("museum")) return "libs/img/museum.png";
+      if (kinds.includes("historic")) return "libs/img/coliseum.png";
+      if (kinds.includes("natural")) return "libs/img/bio.png";
+      if (kinds.includes("religion")) return "libs/img/location.png";
+      return "libs/img/love.png";
     }
   }
 
@@ -241,9 +289,138 @@ document.addEventListener("DOMContentLoaded", function () {
             updateMap(countryLat, countryLon, country, false);
           }
           updateEasyButton(country);
+          fetchCountryBorder(countryCode);
+          updateWikiButton(country);
         }
       })
       .catch((error) => console.error("Error fetching country info:", error));
+  }
+
+  function fetchCountryBorder(countryCode) {
+    fetch(`libs/php/getCountryBorder.php?country=${countryCode}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          console.error("Error fetching border data:", data.error);
+        } else {
+          displayCountryBorder(data);
+        }
+      })
+      .catch((error) => console.error("Error fetching border data:", error));
+  }
+
+  function displayCountryBorder(borderData) {
+    if (countryBorderLayer) {
+      map.removeLayer(countryBorderLayer);
+    }
+
+    if (
+      !borderData ||
+      !borderData.geometry ||
+      !borderData.geometry.type ||
+      !borderData.geometry.coordinates
+    ) {
+      console.error("Invalid border data:", borderData);
+      return;
+    }
+
+    const borderType = borderData.geometry.type;
+    const coordinates = borderData.geometry.coordinates;
+
+    let latLngs;
+
+    if (borderType === "Polygon") {
+      latLngs = coordinates[0].map((coord) => [coord[1], coord[0]]);
+      countryBorderLayer = L.polygon(latLngs, {
+        color: "red",
+        weight: 2,
+        fillColor: "transparent",
+        fillOpacity: 0.5,
+      }).addTo(map);
+    } else if (borderType === "MultiPolygon") {
+      latLngs = coordinates.map((polygon) =>
+        polygon[0].map((coord) => [coord[1], coord[0]])
+      );
+      countryBorderLayer = L.polygon(latLngs, {
+        color: "red",
+        weight: 2,
+        fillColor: "transparent",
+        fillOpacity: 0.5,
+      }).addTo(map);
+    } else {
+      console.error("Unsupported border type:", borderType);
+      return;
+    }
+
+    if (countryBorderLayer) {
+      map.fitBounds(countryBorderLayer.getBounds());
+
+      countryBorderLayer.on("mouseover", function () {
+        countryBorderLayer.setStyle({
+          fillColor: "grey",
+          fillOpacity: 0.7,
+          weight: 3,
+        });
+      });
+
+      countryBorderLayer.on("mouseout", function () {
+        countryBorderLayer.setStyle({
+          fillColor: "transparent",
+          fillOpacity: 0.5,
+          weight: 2,
+        });
+      });
+    }
+  }
+  function fetchWikipediaInfo(countryName) {
+    fetch("libs/php/wikipediaInfo.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        country: countryName,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status && result.status.name === "ok") {
+          displayWikipediaInfo(result.data);
+        } else {
+          console.error(
+            "Error fetching Wikipedia info:",
+            result.status ? result.status.description : "Invalid status object"
+          );
+        }
+      })
+      .catch((error) => console.error("Error fetching Wikipedia info:", error));
+  }
+
+  function displayWikipediaInfo(wikiData) {
+    const wikiContent = wikiData.extract_html || "No information available.";
+    const wikiContentContainer = document.getElementById("wikiContent");
+    wikiContentContainer.innerHTML = wikiContent;
+
+    const wikiModal = new bootstrap.Modal(document.getElementById("wikiModal"));
+    wikiModal.show();
+  }
+  function updateWikiButton(country) {
+    if (wikiButton) {
+      wikiButton.remove();
+    }
+
+    wikiButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-wiki",
+          icon: "fa-wikipedia-w fa-brands",
+          title: "Show Wikipedia Information",
+          onClick: function (btn, map) {
+            fetchWikipediaInfo(country.countryName);
+          },
+        },
+      ],
+    }).addTo(map);
   }
   function updateMap(lat, lon, isCurrentLocation) {
     if (isCurrentLocation) {

@@ -59,7 +59,7 @@
     </div>
 
     <div id="map"></div>
-
+    <!--  Info Modal -->
     <div
       id="exampleModal"
       class="modal fade"
@@ -94,6 +94,32 @@
         </div>
       </div>
     </div>
+    <!-- Wikipedia Modal -->
+    <div
+      class="modal fade"
+      id="wikiModal"
+      tabindex="-1"
+      aria-labelledby="wikiModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="wikiModalLabel">
+              Wikipedia Information
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="wikiContent"></div>
+        </div>
+      </div>
+    </div>
+
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

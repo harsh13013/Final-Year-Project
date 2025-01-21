@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     countryCircle,
     easyButton,
     wikiButton,
+    newsButton,
     countryBorderLayer,
     placeMarkers = [];
   function hidePreLoader() {
@@ -289,8 +290,11 @@ document.addEventListener("DOMContentLoaded", function () {
             updateMap(countryLat, countryLon, country, false);
           }
           updateEasyButton(country);
+
           fetchCountryBorder(countryCode);
           updateWikiButton(country);
+          updateNewsButton(country);
+          updateCurrencyButton(country);
         }
       })
       .catch((error) => console.error("Error fetching country info:", error));
@@ -417,6 +421,174 @@ document.addEventListener("DOMContentLoaded", function () {
           title: "Show Wikipedia Information",
           onClick: function (btn, map) {
             fetchWikipediaInfo(country.countryName);
+          },
+        },
+      ],
+    }).addTo(map);
+  }
+  function fetchNews(countryCode) {
+    fetch("libs/php/newsinfo.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        country: countryCode,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status.name === "ok") {
+          displayNews(result.data);
+        } else {
+          console.error("Error fetching news:", result.status.description);
+        }
+      })
+      .catch((error) => console.error("Error fetching news:", error));
+  }
+
+  function displayNews(newsArticles) {
+    console.log("News Articles:", newsArticles);
+
+    const newsContent = document.getElementById("newsContent");
+    newsContent.innerHTML = "";
+
+    if (newsArticles.length === 0) {
+      newsContent.innerHTML = "<p>No news articles found.</p>";
+      return;
+    }
+
+    const newsList = newsArticles
+      .map(
+        (article) => `
+            <div class="news-article">
+                <h5><a href="${article.url}" target="_blank">${article.title}</a></h5>
+                <p>${article.description}</p>
+                <hr>
+            </div>
+        `
+      )
+      .join("");
+
+    newsContent.innerHTML = newsList;
+
+    const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
+    newsModal.show();
+  }
+
+  function updateNewsButton(country) {
+    if (newsButton) {
+      newsButton.remove();
+    }
+
+    newsButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-news",
+          icon: "fa-solid fa-newspaper",
+          title: "News Articles",
+          onClick: function (btn, map) {
+            fetchNews(country.countryCode);
+          },
+        },
+      ],
+    }).addTo(map);
+  }
+
+  function fetchCurrencyInfo(baseCurrency) {
+    fetch("libs/php/currencyConverter.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        currency: baseCurrency,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          console.error("Error fetching currency info:", data.error);
+        } else {
+          displayCurrencyConverter(data);
+        }
+      })
+      .catch((error) => console.error("Error fetching currency info:", error));
+  }
+
+  function displayCurrencyConverter(data) {
+    const baseCurrency = data.base_code;
+    const targetCurrencySelect = document.getElementById(
+      "targetCurrencySelect"
+    );
+    const amountInput = document.getElementById("amountInput");
+    const conversionResult = document.getElementById("conversionResult");
+
+    amountInput.value = 1;
+
+    targetCurrencySelect.innerHTML = `
+            <option value="${baseCurrency}">${baseCurrency}</option>
+            ${Object.keys(data.conversion_rates)
+              .map(
+                (currency) => `
+                <option value="${currency}">${currency}</option>
+            `
+              )
+              .join("")}
+        `;
+
+    const currencyModal = new bootstrap.Modal(
+      document.getElementById("currencyModal")
+    );
+    currencyModal.show();
+
+    convertCurrency(data);
+    targetCurrencySelect.addEventListener("change", function () {
+      convertCurrency(data);
+    });
+
+    amountInput.addEventListener("input", function () {
+      convertCurrency(data);
+    });
+  }
+
+  function convertCurrency(data) {
+    const amount = parseFloat(document.getElementById("amountInput").value);
+    const targetCurrency = document.getElementById(
+      "targetCurrencySelect"
+    ).value;
+    const baseCurrency = data.base_code;
+
+    if (isNaN(amount) || amount <= 0) {
+      return;
+    }
+
+    const rate = data.conversion_rates[targetCurrency];
+    if (!rate) {
+      console.error(`Conversion rate not found for ${targetCurrency}`);
+      return;
+    }
+
+    const convertedAmount = (amount * rate).toFixed(2);
+    document.getElementById("conversionResult").innerHTML = `
+            <h5>Conversion Result</h5>
+            <p>${amount} ${baseCurrency} = ${convertedAmount} ${targetCurrency}</p>
+        `;
+  }
+  let currencyButton;
+  function updateCurrencyButton(country) {
+    if (currencyButton) {
+      currencyButton.remove();
+    }
+
+    currencyButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-currency",
+          icon: "fa-solid fa-money-bill",
+          title: "Currency Converter",
+          onClick: function (btn, map) {
+            fetchCurrencyInfo(country.currencyCode);
           },
         },
       ],

@@ -119,7 +119,91 @@
         </div>
       </div>
     </div>
+    <!-- News Modal -->
+    <div id="newsModal" class="modal fade" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow">
+          <div class="modal-header">
+            <h5 class="modal-title">Latest News</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="newsContent"></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Currency Modal  -->
+    <div
+      class="modal fade"
+      id="currencyModal"
+      tabindex="-1"
+      aria-labelledby="currencyModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="currencyModalLabel">
+              Currency Converter
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="currencyConverterForm">
+              <div class="mb-3">
+                <label for="amountInput" class="form-label">Amount</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="amountInput"
+                  placeholder="Enter amount"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="targetCurrencySelect" class="form-label"
+                  >Convert to</label
+                >
+                <select
+                  class="form-select"
+                  id="targetCurrencySelect"
+                  required
+                ></select>
+              </div>
 
+              <div id="conversionResult"></div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

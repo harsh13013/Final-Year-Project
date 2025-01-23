@@ -34,10 +34,7 @@
     <div id="pre-loader">
       <div class="loader"></div>
     </div>
-    <div
-      id="navbar"
-      class="navbar navbar-expand-lg navbar-light bg-light shadow"
-    >
+    <div id="navbar" class="navbar navbar-expand-lg">
       <div class="container-fluid">
         <div class="navbar-brand">Country Info</div>
         <div class="d-flex flex-grow-1 justify-content-end gap-3">
@@ -200,6 +197,46 @@
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather Modal -->
+    <div id="weatherModal" class="modal fade" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow">
+          <div class="modal-header">
+            <h5 id="modal-title"></h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-4 text-center">
+                <h5 id="weatherDesc" class="lead mb-0"></h5>
+              </div>
+              <div class="col-md-4 text-center">
+                <i id="weatherIcon" class="fa-3x"></i>
+              </div>
+              <div class="col-md-4 text-center">
+                <h4 id="weatherTemp" class="lead mb-0"></h4>
+              </div>
+            </div>
+            <div id="forecastContent" class="row"></div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>

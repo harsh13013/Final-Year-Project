@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     easyButton,
     wikiButton,
     newsButton,
+    weatherButton,
     countryBorderLayer,
     placeMarkers = [];
   function hidePreLoader() {
@@ -78,6 +79,8 @@ document.addEventListener("DOMContentLoaded", function () {
           console.error("Error in fetching country info:", error);
           hidePreLoader();
         });
+      fetchWeatherInfo(lat, lng);
+      fetchWeatherForecast(lat, lng);
     }
 
     function error(err) {
@@ -290,7 +293,8 @@ document.addEventListener("DOMContentLoaded", function () {
             updateMap(countryLat, countryLon, country, false);
           }
           updateEasyButton(country);
-
+          fetchWeatherInfo(lat, lng, capital, countryName);
+          fetchWeatherForecast(lat, lng);
           fetchCountryBorder(countryCode);
           updateWikiButton(country);
           updateNewsButton(country);
@@ -593,6 +597,182 @@ document.addEventListener("DOMContentLoaded", function () {
         },
       ],
     }).addTo(map);
+  }
+
+  function fetchWeatherInfo(lat, lon, capital, countryName) {
+    if (!lat || !lon) {
+      console.error("Latitude and Longitude are required.");
+      return;
+    }
+
+    fetch("libs/php/weatherInfo.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        lat: lat,
+        lon: lon,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.error) {
+          console.error("Error fetching weather info:", result.error);
+        } else {
+          updateWeatherButton(result, capital, countryName);
+        }
+      })
+      .catch((error) => console.error("Error fetching weather info:", error));
+  }
+
+  function updateWeatherButton(weather, capital, countryName) {
+    if (weatherButton) {
+      weatherButton.remove();
+    }
+
+    weatherButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-weather",
+          icon: "fa-cloud fa-lg",
+          title: "Weather Information",
+          onClick: function (btn, map) {
+            const weatherTitle = document.getElementById("modal-title");
+            weatherTitle.textContent = `${capital}, ${countryName}`;
+
+            const weatherDesc = document.getElementById("weatherDesc");
+            const weatherIcon = document.getElementById("weatherIcon");
+            const weatherTemp = document.getElementById("weatherTemp");
+
+            const weatherDescription =
+              weather.description.toUpperCase() || "No description available";
+            const weatherCondition = weather.weather || "Clouds";
+
+            const weatherIconData = getWeatherIcon(weatherCondition);
+
+            weatherDesc.textContent = weatherDescription;
+            weatherIcon.className = `fas ${weatherIconData.icon} ${weatherIconData.colorClass} fa-3x mb-2`;
+
+            const temp = Math.floor(weather.temp || "N/A");
+
+            weatherTemp.textContent = `${temp}°C`;
+
+            new bootstrap.Modal(document.getElementById("weatherModal")).show();
+          },
+        },
+      ],
+    }).addTo(map);
+  }
+
+  function fetchWeatherForecast(lat, lon) {
+    if (!lat || !lon) {
+      console.error("Latitude and Longitude are required for forecast.");
+      return;
+    }
+
+    fetch("libs/php/weatherForecast.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        lat: lat,
+        lon: lon,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.error) {
+          console.error("Error fetching weather forecast:", result.error);
+        } else {
+          updateWeatherForecast(result);
+        }
+      })
+      .catch((error) =>
+        console.error("Error fetching weather forecast:", error)
+      );
+  }
+
+  function updateWeatherForecast(forecast) {
+    if (!forecast || !forecast.list) {
+      console.error("Invalid forecast data:", forecast);
+      return;
+    }
+
+    const nextTwoDays = [1, 2].map((days) => {
+      const date = new Date();
+      date.setDate(new Date().getDate() + days);
+      return date.toISOString().slice(0, 10);
+    });
+
+    const forecastMap = {};
+
+    forecast.list.forEach((item) => {
+      const itemDate = new Date(item.dt * 1000).toISOString().slice(0, 10);
+      const weatherCondition = item.weather[0]?.main;
+      const iconData = getWeatherIcon(weatherCondition);
+
+      if (nextTwoDays.includes(itemDate)) {
+        if (!forecastMap[itemDate]) {
+          forecastMap[itemDate] = {
+            temp_min: item.main.temp_min,
+            temp_max: item.main.temp_max,
+            weatherIcon: iconData.icon,
+            colorClass: iconData.colorClass,
+          };
+        } else {
+          forecastMap[itemDate].temp_min = Math.min(
+            forecastMap[itemDate].temp_min,
+            item.main.temp_min
+          );
+          forecastMap[itemDate].temp_max = Math.max(
+            forecastMap[itemDate].temp_max,
+            item.main.temp_max
+          );
+        }
+      }
+    });
+
+    const forecastContent = Object.keys(forecastMap)
+      .sort()
+      .map((date) => {
+        const dateObj = new Date(date);
+        const formattedDate = dateObj.toLocaleDateString("en-US", {
+          day: "2-digit",
+          month: "short",
+        });
+        const weatherData = forecastMap[date];
+
+        return `
+                    <div class="col-6 mb-3">
+                        <div class="forecast-item text-center p-3 border">
+                            <h6>${formattedDate}</h6>
+                            <i class="fas ${weatherData.weatherIcon} ${
+          weatherData.colorClass
+        } fa-3x mb-2"></i>
+                            <h4>${Math.floor(weatherData.temp_max)}°C</h4>
+                            <p>${Math.floor(weatherData.temp_min)}°C</p>
+                        </div>
+                    </div>
+                `;
+      })
+      .join("");
+
+    document.getElementById("forecastContent").innerHTML = forecastContent;
+  }
+
+  function getWeatherIcon(iconCode) {
+    switch (iconCode) {
+      case "Clear":
+        return { icon: "fa fa-sun", colorClass: "icon-sun" };
+      case "Clouds":
+        return { icon: "fa fa-cloud", colorClass: "icon-cloud" };
+      case "Rain":
+        return { icon: "fa fa-tint", colorClass: "icon-rain" };
+      default:
+        return { icon: "fa fa-cloud", colorClass: "icon-cloud" };
+    }
   }
   function updateMap(lat, lon, isCurrentLocation) {
     if (isCurrentLocation) {

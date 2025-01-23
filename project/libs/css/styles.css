@@ -17,7 +17,7 @@ body {
   z-index: 1000;
   width: 100%;
   padding: 10px 15px;
-  background-color: #ffffff;
+  background-color: #e8e2dd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 .modal-header {

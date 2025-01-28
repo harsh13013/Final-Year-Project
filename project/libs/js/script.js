@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     wikiButton,
     newsButton,
     weatherButton,
+    visaButton,
     countryBorderLayer,
     placeMarkers = [];
   function hidePreLoader() {
@@ -299,6 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
           updateWikiButton(country);
           updateNewsButton(country);
           updateCurrencyButton(country);
+          updateVisaButton(country);
         }
       })
       .catch((error) => console.error("Error fetching country info:", error));
@@ -773,6 +775,167 @@ document.addEventListener("DOMContentLoaded", function () {
       default:
         return { icon: "fa fa-cloud", colorClass: "icon-cloud" };
     }
+  }
+  function updateVisaButton(destinationCountry) {
+    if (visaButton) {
+      visaButton.remove();
+    }
+
+    visaButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-visa",
+          icon: "fa fa-ticket",
+          title: "Visa Requirements",
+          onClick: function () {
+            if (destinationCountry) {
+              const destinationSelect = document.getElementById(
+                "destinationCountrySelect"
+              );
+              destinationSelect.innerHTML = "";
+              const option = document.createElement("option");
+              option.value = destinationCountry;
+              option.text = destinationCountry;
+              option.selected = true;
+              destinationSelect.appendChild(option);
+            }
+
+            fetchPassport();
+            fetchDestinationPassport();
+
+            const visaModal = new bootstrap.Modal(
+              document.getElementById("visaModal")
+            );
+            visaModal.show();
+
+            visaModal._element.addEventListener("shown.bs.modal", function () {
+              const fetchVisaReqButton =
+                document.getElementById("fetchVisaReqButton");
+
+              if (fetchVisaReqButton) {
+                fetchVisaReqButton.addEventListener(
+                  "click",
+                  async function (event) {
+                    event.preventDefault();
+
+                    const passportCountry = document.getElementById(
+                      "passportCountrySelect"
+                    ).value;
+                    const destinationCountry = document.getElementById(
+                      "destinationCountrySelect"
+                    ).value;
+
+                    if (!passportCountry || !destinationCountry) {
+                      document.getElementById("visaResult").innerHTML =
+                        "<p class='text-danger'>Please select both passport and destination countries.</p>";
+                      return;
+                    }
+
+                    try {
+                      const visaData = await fetchVisaReq(
+                        passportCountry,
+                        destinationCountry
+                      );
+
+                      const durationText = visaData.dur
+                        ? `${visaData.dur}`
+                        : "Not valid";
+                      const visaResultDiv =
+                        document.getElementById("visaResult");
+                      visaResultDiv.innerHTML = `
+                      <h5>Visa Requirements</h5>
+                      <p><strong>Passport:</strong> ${visaData.passport.name} (${visaData.passport.code})</p>
+                      <p><strong>Destination:</strong> ${visaData.destination.name} (${visaData.destination.code})</p>
+                      <p><strong>Category:</strong> ${visaData.category.name}</p>
+                      <p><strong>Duration:</strong> ${durationText}</p>
+                    `;
+                      document.getElementById("passportCountrySelect").value =
+                        "";
+                      document.getElementById(
+                        "destinationCountrySelect"
+                      ).value = "";
+                    } catch (error) {
+                      console.error("Error fetching visa data:", error);
+                      document.getElementById("visaResult").innerHTML = `
+                      <p class="text-danger">Error fetching visa requirements: ${error.message}</p>
+                    `;
+                    }
+                  }
+                );
+              } else {
+                console.error("fetchVisaReqButton not found.");
+              }
+            });
+          },
+        },
+      ],
+    }).addTo(map);
+  }
+
+  async function fetchVisaReq(passportCountry, destinationCountry) {
+    const url = `libs/php/visa.php?passportCountry=${passportCountry}&destinationCountry=${destinationCountry}`;
+    console.log(`Request URL: ${url}`);
+
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        if (data.status.code === "200") {
+          return data.data;
+        } else {
+          throw new Error(data.status.description || "Unknown error occurred");
+        }
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", text);
+        throw new Error("Invalid JSON response from server.");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      throw error;
+    }
+  }
+
+  function fetchPassport() {
+    fetch("libs/php/getCountryList.php")
+      .then((response) => response.json())
+      .then((data) => {
+        const passportCountrySelect = document.getElementById(
+          "passportCountrySelect"
+        );
+        passportCountrySelect.innerHTML =
+          "<option value='' disabled selected>Select a country</option>";
+        data.countries.forEach((country) => {
+          let option = document.createElement("option");
+          option.value = country.iso;
+          option.text = country.name;
+          passportCountrySelect.appendChild(option);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching passport countries:", error);
+      });
+  }
+
+  function fetchDestinationPassport() {
+    fetch("libs/php/getCountryList.php")
+      .then((response) => response.json())
+      .then((data) => {
+        const destinationCountrySelect = document.getElementById(
+          "destinationCountrySelect"
+        );
+        destinationCountrySelect.innerHTML =
+          "<option value='' disabled selected>Select a country</option>";
+        data.countries.forEach((country) => {
+          let option = document.createElement("option");
+          option.value = country.iso;
+          option.text = country.name;
+          destinationCountrySelect.appendChild(option);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching destination countries:", error);
+      });
   }
   function updateMap(lat, lon, isCurrentLocation) {
     if (isCurrentLocation) {

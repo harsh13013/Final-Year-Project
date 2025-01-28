@@ -241,6 +241,71 @@
         </div>
       </div>
     </div>
+    <!-- Visa Requirements Modal -->
+    <div
+      class="modal fade"
+      id="visaModal"
+      tabindex="-1"
+      aria-labelledby="visaModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="visaModalLabel">Visa Requirements</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="visaForm">
+              <div class="mb-3">
+                <label for="passportCountrySelect" class="form-label"
+                  >Passport Country</label
+                >
+                <select class="form-select" id="passportCountrySelect" required>
+                  <option value="" disabled selected>Select a country</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="destinationCountrySelect" class="form-label"
+                  >Destination Country</label
+                >
+                <select
+                  class="form-select"
+                  id="destinationCountrySelect"
+                  required
+                >
+                  <option value="" disabled selected>
+                    Select your destination country
+                  </option>
+                </select>
+              </div>
+              <div id="visaResult" class="mt-3"></div>
+              <div class="modal-footer">
+                <button
+                  id="fetchVisaReqButton"
+                  type="submit"
+                  class="btn btn-info"
+                >
+                  Get Requirements
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

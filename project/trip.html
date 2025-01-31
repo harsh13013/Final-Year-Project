@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>City Trip Planning</title>
+    <link rel="icon" type="image/ico" href="libs/img/favicon.ico" />
+    <link rel="stylesheet" href="libs/css/trip.css" />
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA4KGrT4S9X7S2pzdWTh-rku6HSzlMEyGk&libraries=places"
+      async
+      defer
+    ></script>
+  </head>
+  <body>
+    <header>
+      <a href="index.html" class="logo">Country Info</a>
+      <p>Plan Your Trip</p>
+    </header>
+    <div class="main">
+      <h1>Plan Your City Trip</h1>
+      <section class="trip-planner">
+        <form id="trip-form">
+          <label for="city">Select Destination City:</label>
+          <div id="searchContainer" class="control-box">
+            <input
+              type="text"
+              id="placeSearch"
+              class="form-control"
+              placeholder="Search for a city"
+            />
+          </div>
+          <label for="days">Number of Days:</label>
+          <input
+            type="number"
+            id="days"
+            name="days"
+            min="1"
+            max="30"
+            placeholder="Enter number of days"
+            required
+          />
+          <label for="pace">Travel Pace:</label>
+          <select id="pace" name="pace">
+            <option value="relaxed">Relaxed</option>
+            <option value="moderate">Moderate</option>
+            <option value="fast">Fast</option>
+          </select>
+          <button type="submit">Generate Itinerary</button>
+        </form>
+      </section>
+      <div id="itinerary">
+        <h3>Your Trip Itinerary</h3>
+        <div id="itineraryDays" class="itinerary-container"></div>
+      </div>
+    </div>
+    <script src="libs/js/trip.js"></script>
+  </body>
+</html>

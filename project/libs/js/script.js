@@ -9,8 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
     newsButton,
     weatherButton,
     visaButton,
+    filterButton,
     countryBorderLayer,
-    placeMarkers = [];
+    placeMarkers = [],
+    userInteracted = false;
+
   function hidePreLoader() {
     const preLoader = document.getElementById("pre-loader");
     if (preLoader) {
@@ -34,25 +37,37 @@ document.addEventListener("DOMContentLoaded", function () {
   function initMap() {
     map = L.map("map").setView([20, 0], 2);
 
-    const osmTileLayer = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution: "© OpenStreetMap contributors",
-      }
-    );
     loadGoogleMapsAPI(initPlaceSearch);
+
     const satelliteTileLayer = L.tileLayer(
       "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-      {
-        attribution: "© OpenTopoMap contributors",
-      }
+      { attribution: "© OpenTopoMap contributors" }
     );
-    osmTileLayer.addTo(map);
+
+    const streetLayer = L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      { attribution: "© Carto contributors" }
+    );
+
+    const darkLayer = L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      { attribution: "© Carto contributors" }
+    );
+
+    const lightLayer = L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      { attribution: "© Carto" }
+    );
+
+    streetLayer.addTo(map);
 
     const baseLayers = {
-      "Street View": osmTileLayer,
+      "Street View": streetLayer,
       "Satellite View": satelliteTileLayer,
+      "Dark View": darkLayer,
+      "Light View": lightLayer,
     };
+
     L.control.layers(baseLayers).addTo(map);
 
     if (location.protocol === "https:" || location.hostname === "localhost") {
@@ -63,27 +78,26 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } else {
       alert("Geolocation is only available over HTTPS or on localhost.");
-      alert(
-        "Geolocation requests are blocked because the site is not served over HTTPS. Please switch to a secure connection."
-      );
     }
 
     function success(pos) {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
+      if (!userInteracted) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        map.setView([lat, lng], 13);
 
-      map.setView([lat, lng], 13);
+        setTimeout(() => {
+          fetchCountryName(lat, lng)
+            .then(hidePreLoader)
+            .catch((error) =>
+              console.error("Error fetching country info:", error)
+            );
 
-      fetchCountryName(lat, lng)
-        .then(() => hidePreLoader())
-        .catch((error) => {
-          console.error("Error in fetching country info:", error);
-          hidePreLoader();
-        });
-      fetchWeatherInfo(lat, lng);
-      fetchWeatherForecast(lat, lng);
+          fetchWeatherInfo(lat, lng);
+          fetchWeatherForecast(lat, lng);
+        }, 300);
+      }
     }
-
     function error(err) {
       if (err.code === 1) {
         alert("Please allow geolocation access");
@@ -105,23 +119,42 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
 
-        const { lat, lng } = place.geometry.location;
+        userInteracted = true;
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
         const name = place.name;
 
-        map.setView([lat(), lng()], 13);
+        map.setView([lat, lng], 13);
         placeMarkers.forEach((marker) => map.removeLayer(marker));
         placeMarkers = [];
-        const cityMarker = L.marker([lat(), lng()])
+
+        const cityMarker = L.marker([lat, lng])
           .bindPopup(`<b>${name}</b>`)
           .addTo(map);
-        fetchNearbyAttractions(lat(), lng());
+
+        fetchNearbyAttractions(lat, lng);
       });
     }
 
     function fetchNearbyAttractions(lat, lng) {
+      if (!userInteracted) return;
+
       const apiKey = "5ae2e3f221c38a28845f05b63374bf6fb80ff0ac34f52dfa39109360";
-      const radius = 50000;
-      const url = `https://api.opentripmap.com/0.1/en/places/radius?radius=${radius}&lon=${lng}&lat=${lat}&apikey=${apiKey}`;
+
+      if (!lat || !lng) {
+        const center = map.getCenter();
+        lat = center.lat;
+        lng = center.lng;
+      }
+
+      const bounds = map.getBounds();
+      const lat_min = bounds.getSouthWest().lat;
+      const lat_max = bounds.getNorthEast().lat;
+      const lon_min = bounds.getSouthWest().lng;
+      const lon_max = bounds.getNorthEast().lng;
+
+      const url = `https://api.opentripmap.com/0.1/en/places/bbox?lon_min=${lon_min}&lat_min=${lat_min}&lon_max=${lon_max}&lat_max=${lat_max}&apikey=${apiKey}`;
 
       fetch(url)
         .then((response) => response.json())
@@ -135,27 +168,9 @@ document.addEventListener("DOMContentLoaded", function () {
               const [placeLng, placeLat] = place.geometry.coordinates;
 
               const marker = L.marker([placeLat, placeLng], {
-                icon: L.icon({
-                  iconUrl: getCategoryIcon(kinds),
-                  iconSize: [32, 32],
-                }),
+                icon: getCategoryIcon(kinds),
+                kinds: kinds,
               });
-
-              marker
-                .on("mouseover", (e) => {
-                  const hoverTooltip = L.tooltip({
-                    permanent: false,
-                    direction: "top",
-                    className: "custom-tooltip",
-                  })
-                    .setContent(`<b>${name}</b>`)
-                    .setLatLng(e.latlng);
-
-                  marker.bindTooltip(hoverTooltip).openTooltip();
-                })
-                .on("mouseout", () => {
-                  marker.closeTooltip();
-                });
 
               marker.on("click", () => {
                 fetch(
@@ -166,22 +181,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     const imageUrl = details.preview
                       ? details.preview.source
                       : null;
-
                     marker
                       .bindPopup(
                         `<b>${name}</b><br>
-                       ${details.kinds || "Category not available"}<br>
-                       ${
-                         imageUrl
-                           ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto;">`
-                           : ""
-                       }
-                       <p>${
-                         details.wikipedia_extracts
-                           ? details.wikipedia_extracts.text
-                           : "No additional information available."
-                       }</p>
-                       <a href="https://opentripmap.com/en/places/${xid}" target="_blank">More Info</a>`
+                          ${details.kinds || "Category not available"}<br>
+                          ${
+                            imageUrl
+                              ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto;">`
+                              : ""
+                          }
+                          <p>${
+                            details.wikipedia_extracts
+                              ? details.wikipedia_extracts.text
+                              : "No additional information available."
+                          }</p>
+                          <a href="https://opentripmap.com/en/places/${xid}" target="_blank">More Info</a>`
                       )
                       .openPopup();
                   })
@@ -194,23 +208,181 @@ document.addEventListener("DOMContentLoaded", function () {
               placeMarkers.push(marker);
             });
           } else {
-            alert("No attractions found in the selected area.");
+            console.log("No attractions found in the selected area.");
           }
         })
         .catch((error) => {
           console.error("Error fetching attractions:", error);
-          alert("Failed to fetch attractions. Please try again later.");
         });
     }
+
+    map.on("moveend", () => {
+      if (userInteracted) {
+        fetchNearbyAttractions();
+      }
+    });
     function getCategoryIcon(kinds) {
-      if (kinds.includes("museum")) return "libs/img/museum.png";
-      if (kinds.includes("historic")) return "libs/img/coliseum.png";
-      if (kinds.includes("natural")) return "libs/img/bio.png";
-      if (kinds.includes("religion")) return "libs/img/location.png";
-      return "libs/img/love.png";
+      const museumStyle =
+        "color: #DEB887; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-size: 24px;";
+      const historicStyle =
+        "color: #0000FF; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-size: 24px;";
+      const naturalStyle =
+        "color: #006400; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-size: 24px;";
+      const religionStyle =
+        "color: #FF8C00; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-size: 24px;";
+      const iconStyle =
+        "color: #48D1CC; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-size: 24px;";
+
+      if (kinds.includes("museum"))
+        return L.divIcon({
+          html: `<i class="fas fa-landmark" style="${museumStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("historic"))
+        return L.divIcon({
+          html: `<i class="fas fa-monument" style="${historicStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("natural"))
+        return L.divIcon({
+          html: `<i class="fas fa-tree" style="color: #4caf50; ${naturalStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("religion"))
+        return L.divIcon({
+          html: `<i class="fas fa-place-of-worship" style="color: #f39c12; ${religionStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("water"))
+        return L.divIcon({
+          html: `<i class="fas fa-water" style="color: #007bff; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("art"))
+        return L.divIcon({
+          html: `<i class="fas fa-palette" style="color: #9c27b0; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("park"))
+        return L.divIcon({
+          html: `<i class="fas fa-tree-city" style="color: #28a745; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("beach"))
+        return L.divIcon({
+          html: `<i class="fas fa-umbrella-beach" style="color: #f4a261; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("castle"))
+        return L.divIcon({
+          html: `<i class="fas fa-chess-rook" style="color: #6c757d; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("bridge"))
+        return L.divIcon({
+          html: `<i class="fas fa-bridge" style="color: #795548; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("shopping"))
+        return L.divIcon({
+          html: `<i class="fas fa-shopping-bag" style="color: #dc3545; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("food"))
+        return L.divIcon({
+          html: `<i class="fas fa-utensils" style="color: #e67e22; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("zoo"))
+        return L.divIcon({
+          html: `<i class="fas fa-paw" style="color: #ff9800; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("theatre"))
+        return L.divIcon({
+          html: `<i class="fa-solid fa-film" style="color: #c0392b; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("science"))
+        return L.divIcon({
+          html: `<i class="fas fa-flask" style="color: #1abc9c; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+      if (kinds.includes("sports"))
+        return L.divIcon({
+          html: `<i class="fas fa-futbol" style="color: #2c3e50; ${iconStyle}"></i>`,
+          className: "custom-icon",
+          iconSize: [32, 32],
+        });
+
+      return L.divIcon({
+        html: `<i class="fas fa-map-marker-alt" style="color: #e74c3c; ${iconStyle}"></i>`,
+        className: "custom-icon",
+        iconSize: [32, 32],
+      });
     }
   }
+  function addFilterButton() {
+    if (filterButton) {
+      filterButton.remove();
+    }
 
+    filterButton = L.easyButton({
+      states: [
+        {
+          stateName: "show-filter",
+          icon: "fa-filter fa-solid",
+          title: "Filter Attractions",
+          onClick: function (btn, map) {
+            const filterModal = document.getElementById("filterModal");
+            const modal = new bootstrap.Modal(filterModal);
+            modal.show();
+          },
+        },
+      ],
+    }).addTo(map);
+  }
+  document
+    .getElementById("filterForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+      const selectedCategory = document.getElementById("categoryFilter").value;
+      filterAttractions(selectedCategory);
+      $("#filterModal").modal("hide");
+    });
+  document
+    .querySelector(".btn-secondary")
+    .addEventListener("click", function (event) {
+      event.preventDefault();
+      document.getElementById("categoryFilter").value = "all";
+      filterAttractions("all");
+      $("#filterModal").modal("hide");
+    });
+  function filterAttractions(category) {
+    placeMarkers.forEach((marker) => {
+      const kinds = marker.options.kinds;
+      if (category === "all" || kinds.includes(category)) {
+        marker.addTo(map);
+      } else {
+        map.removeLayer(marker);
+      }
+    });
+  }
   function fetchCountryName(lat, lng) {
     const url = "libs/php/nearbyPlaces.php";
     return fetch(url, {
@@ -301,6 +473,7 @@ document.addEventListener("DOMContentLoaded", function () {
           updateNewsButton(country);
           updateCurrencyButton(country);
           updateVisaButton(country);
+          addFilterButton();
         }
       })
       .catch((error) => console.error("Error fetching country info:", error));
@@ -365,21 +538,21 @@ document.addEventListener("DOMContentLoaded", function () {
     if (countryBorderLayer) {
       map.fitBounds(countryBorderLayer.getBounds());
 
-      countryBorderLayer.on("mouseover", function () {
-        countryBorderLayer.setStyle({
-          fillColor: "grey",
-          fillOpacity: 0.7,
-          weight: 3,
-        });
-      });
+      // countryBorderLayer.on("mouseover", function () {
+      //   countryBorderLayer.setStyle({
+      //     fillColor: "grey",
+      //     fillOpacity: 0.7,
+      //     weight: 3,
+      //   });
+      // });
 
-      countryBorderLayer.on("mouseout", function () {
-        countryBorderLayer.setStyle({
-          fillColor: "transparent",
-          fillOpacity: 0.5,
-          weight: 2,
-        });
-      });
+      // countryBorderLayer.on("mouseout", function () {
+      //   countryBorderLayer.setStyle({
+      //     fillColor: "transparent",
+      //     fillOpacity: 0.5,
+      //     weight: 2,
+      //   });
+      // });
     }
   }
   function fetchWikipediaInfo(countryName) {
@@ -408,12 +581,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function displayWikipediaInfo(wikiData) {
     const wikiContent = wikiData.extract_html || "No information available.";
+    const wikiUrl = wikiData.wiki_url || "#";
+
     const wikiContentContainer = document.getElementById("wikiContent");
     wikiContentContainer.innerHTML = wikiContent;
+
+    const wikiUrlContainer = document.getElementById("wiki_url");
+    wikiUrlContainer.innerHTML = `<a href="${wikiUrl}" target="_blank" rel="noopener noreferrer">Read more on Wikipedia</a>`;
 
     const wikiModal = new bootstrap.Modal(document.getElementById("wikiModal"));
     wikiModal.show();
   }
+
   function updateWikiButton(country) {
     if (wikiButton) {
       wikiButton.remove();

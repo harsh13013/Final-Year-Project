@@ -17,8 +17,9 @@
     />
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
     />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.EasyButton/2.4.0/easy-button.css"
@@ -114,6 +115,7 @@
             ></button>
           </div>
           <div class="modal-body" id="wikiContent"></div>
+          <div class="modal-body" id="wiki_url"></div>
         </div>
       </div>
     </div>
@@ -302,6 +304,51 @@
                   Close
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Filter Modal -->
+    <div
+      class="modal fade"
+      id="filterModal"
+      tabindex="-1"
+      aria-labelledby="filterModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="filterModalLabel">
+              Filter Attractions
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="filterForm">
+              <div class="mb-3">
+                <label for="categoryFilter" class="form-label">Category</label>
+                <select class="form-select" id="categoryFilter">
+                  <option value="all">All</option>
+                  <option value="museum">Museum</option>
+                  <option value="historic">Historic</option>
+                  <option value="natural">Natural</option>
+                  <option value="religion">Religion</option>
+                  <option value="cinema">Cinema</option>
+                  <option value="bridges">Bridges</option>
+                  <option value="parks">Parks</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Apply Filters
+              </button>
+              <button class="btn btn-secondary">Clear Filters</button>
             </form>
           </div>
         </div>

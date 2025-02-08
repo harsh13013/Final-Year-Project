@@ -4,8 +4,8 @@ error_reporting(E_ALL);
 
 $executionStartTime = microtime(true);
 $countryCode = $_POST['country'];
-
-$url = "https://newsdata.io/api/1/news?apikey=pub_4988763a7b0cd1f178ebf51f1d813e9356eee&q=$countryCode";
+$language = 'en';
+$url = "https://newsdata.io/api/1/news?apikey=pub_4988763a7b0cd1f178ebf51f1d813e9356eee&q=$countryCode&language=$language";
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);

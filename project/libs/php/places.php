@@ -9,7 +9,7 @@ if (!isset($_GET['city']) || empty($_GET['city'])) {
     echo json_encode(["success" => false, "error" => "City parameter is required"]);
     exit;
 }
-
+ 
 $city = urlencode($_GET['city']);
 
 

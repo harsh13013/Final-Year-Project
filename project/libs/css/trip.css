@@ -1,35 +1,64 @@
 body {
-  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #e8e2dd;
+  background-color: #f8f4f0;
+  color: #333;
 }
 
 header {
-  background-color: #d4c2a8;
-  color: #333;
-  text-align: center;
-  padding: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #d7ccc8;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
 }
+
+.head {
+  display: flex;
+  align-items: center;
+  background-color: #d7ccc8;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
 .logo {
-  color: black;
-  font-size: 30px;
+  color: #222;
+  font-size: 28px;
   text-decoration: none;
-  font-weight: 300;
+  font-weight: 500;
   font-style: italic;
 }
+
+.companyLogo {
+  width: 45px;
+  height: 45px;
+  margin-left: 10px;
+  mix-blend-mode: multiply;
+}
+
 .main {
   max-width: 800px;
-  margin: 20px auto;
-  background: #f4f4f4;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin: 120px auto;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 h1 {
   text-align: center;
-  color: #444;
+  color: #333;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
 form {
@@ -38,36 +67,38 @@ form {
 
 label {
   display: block;
-  margin: 10px 0 5px;
+  margin: 12px 0 6px;
+  font-weight: 500;
+  color: #444;
 }
 
 input,
-button {
-  width: 95%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
+button,
 select {
-  width: 98%;
-  padding: 10px;
+  width: 100%;
+  padding: 12px;
   margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+select {
+  background-color: #fff;
 }
 
 button {
-  width: 98%;
-  background-color: #dfd3c3;
-  color: black;
+  background-color: #d7ccc8;
+  color: #222;
   font-weight: bold;
   border: none;
   cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s;
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: #a1887f;
+  transform: scale(1.02);
 }
 
 .itinerary-container {
@@ -77,21 +108,51 @@ button:hover {
 }
 
 .itinerary-day {
-  background: #f9f9f9;
+  background: #fafafa;
   padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .itinerary-day h4 {
   margin: 0 0 10px;
-  color: #333;
+  color: #444;
+  font-size: 20px;
 }
 
 .activity {
   margin: 5px 0;
-  padding: 10px;
+  padding: 12px;
   background: #eef;
   border-radius: 5px;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  header {
+    padding: 15px 30px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .logo {
+    font-size: 24px;
+  }
+
+  .companyLogo {
+    width: 35px;
+    height: 35px;
+  }
+
+  .main {
+    width: 90%;
+    margin: 100px auto;
+    padding: 20px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 10px;
+  }
 }

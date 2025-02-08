@@ -7,15 +7,15 @@ if (isset($_POST['country'])) {
     $response = file_get_contents($url);
 
     if ($response !== false) {
-    
         $data = json_decode($response, true);
         
         if (isset($data['query']['pages'])) {
-     
             $pages = $data['query']['pages'];
             $page = reset($pages);
             
             $extractHtml = isset($page['extract']) ? $page['extract'] : "No information available.";
+            $wikiTitle = isset($page['title']) ? $page['title'] : $_POST['country'];
+            $wikiUrl = "https://en.wikipedia.org/wiki/" . urlencode($wikiTitle);
 
             echo json_encode([
                 "status" => [
@@ -24,11 +24,11 @@ if (isset($_POST['country'])) {
                     "description" => "success"
                 ],
                 "data" => [
-                    "extract_html" => $extractHtml
+                    "extract_html" => $extractHtml,
+                    "wiki_url" => $wikiUrl  
                 ]
             ]);
         } else {
-        
             echo json_encode([
                 "status" => [
                     "name" => "error",
@@ -57,5 +57,3 @@ if (isset($_POST['country'])) {
 }
 
 ?>
-
-

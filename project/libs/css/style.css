@@ -2,11 +2,12 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
   min-height: 100vh;
+  background-color: #f8f8f8;
 }
 
 header {
@@ -14,34 +15,35 @@ header {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 20px 100px;
+  padding: 15px 80px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #dfd3c3;
+  background-color: #d7ccc8;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  background-color: #dfd3c3;
-  padding: 5px 10px;
-  border-radius: 5px;
+  background: none;
+}
+.logo-container a {
+  text-decoration: none;
 }
 
 .logo {
-  font-size: 30px;
-  text-decoration: none;
-  font-weight: 300;
+  font-size: 32px;
   font-style: italic;
-  color: black;
+  color: #222;
+  font-weight: 500;
   margin-right: 10px;
 }
 
 .companyLogo {
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   margin-left: 10px;
   mix-blend-mode: multiply;
 }
@@ -53,97 +55,97 @@ nav {
 
 nav a {
   text-decoration: none;
-  color: black;
-  font-size: 20px;
-  margin-left: 40px;
+  color: #333;
+  font-size: 18px;
+  margin-left: 35px;
   font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease;
 }
 
-nav a::before {
+nav a::after {
   content: "";
   position: absolute;
-  top: 100%;
   left: 0;
+  bottom: -5px;
   width: 0;
   height: 2px;
-  background-color: white;
-  transition: 0.3s;
+  background-color: #0077b6;
+  transition: width 0.3s ease;
 }
 
-nav a:hover::before {
+nav a:hover {
+  color: #0077b6;
+}
+
+nav a:hover::after {
   width: 100%;
 }
 
 #map {
   position: absolute;
-  top: 272px;
+  top: 250px;
   width: 100%;
-  height: calc(100% - 60px);
+  height: calc(100% - 250px);
 }
 
 section {
   position: fixed;
-  top: 72px;
+  top: 70px;
   width: 100%;
-  height: 200px;
-  background-color: #e8e2dd;
+  height: 180px;
+  background: rgba(231, 225, 218, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 3px solid #ccc;
 }
 
 section h3 {
   color: #333;
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 700;
 }
 
 @media (max-width: 767px) {
   header {
-    padding: 20px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .logo-container {
+    padding: 15px;
     flex-direction: column;
     align-items: flex-start;
   }
 
   .logo {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .companyLogo {
-    width: 30px;
-    height: 30px;
-    mix-blend-mode: multiply;
+    width: 35px;
+    height: 35px;
   }
 
   nav {
-    display: flex;
     flex-direction: column;
     align-items: flex-start;
     margin-top: 10px;
   }
 
   nav a {
-    font-size: 18px;
+    font-size: 16px;
     margin-left: 0;
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   section {
     height: auto;
-    padding: 10px;
-    box-shadow: none;
+    padding: 15px;
+    text-align: center;
   }
 
   section h3 {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   #map {
@@ -154,22 +156,11 @@ section h3 {
 
 @media (max-width: 1024px) {
   header {
-    padding: 20px;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .logo-container {
-    display: flex;
-    align-items: center;
-  }
-
-  nav {
-    flex-direction: row;
+    padding: 15px 40px;
   }
 
   nav a {
-    font-size: 18px;
+    font-size: 17px;
     margin-left: 20px;
   }
 

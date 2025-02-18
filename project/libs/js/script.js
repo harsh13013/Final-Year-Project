@@ -33,12 +33,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 100);
     }
   }
-
+  //Map initialization
   function initMap() {
     map = L.map("map").setView([20, 0], 2);
 
     loadGoogleMapsAPI(initPlaceSearch);
-
+    //Map tiles
     const satelliteTileLayer = L.tileLayer(
       "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
       { attribution: "© OpenTopoMap contributors" }
@@ -81,23 +81,30 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function success(pos) {
-      if (!userInteracted) {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        map.setView([lat, lng], 13);
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      map.setView([lat, lng], 10);
 
-        setTimeout(() => {
-          fetchCountryName(lat, lng)
-            .then(hidePreLoader)
-            .catch((error) =>
-              console.error("Error fetching country info:", error)
-            );
+      hidePreLoader();
 
-          fetchWeatherInfo(lat, lng);
-          fetchWeatherForecast(lat, lng);
-        }, 300);
-      }
+      setTimeout(() => {
+        fetchCountryName(lat, lng)
+          .then((countryData) => {
+            fetchWeatherInfo(lat, lng);
+            fetchWeatherForecast(lat, lng);
+            fetchCountryBorder(countryData.countryCode);
+          })
+          .catch((error) =>
+            console.error("Error fetching country info:", error)
+          );
+      }, 500);
     }
+
+    function error(err) {
+      console.warn("Geolocation error:", err);
+      hidePreLoader();
+    }
+
     function error(err) {
       if (err.code === 1) {
         alert("Please allow geolocation access");
@@ -109,6 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function initPlaceSearch() {
       const input = document.getElementById("placeSearch");
       const autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ["(cities)"],
         fields: ["geometry", "name"],
       });
 
@@ -184,7 +192,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     marker
                       .bindPopup(
                         `<b>${name}</b><br>
-                          ${details.kinds || "Category not available"}<br>
                           ${
                             imageUrl
                               ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto;">`
@@ -194,8 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             details.wikipedia_extracts
                               ? details.wikipedia_extracts.text
                               : "No additional information available."
-                          }</p>
-                          <a href="https://opentripmap.com/en/places/${xid}" target="_blank">More Info</a>`
+                          }</p>`
                       )
                       .openPopup();
                   })
@@ -207,6 +213,8 @@ document.addEventListener("DOMContentLoaded", function () {
               marker.addTo(map);
               placeMarkers.push(marker);
             });
+
+            filterAttractions(currentFilter);
           } else {
             console.log("No attractions found in the selected area.");
           }
@@ -337,6 +345,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+  let currentFilter = "all";
   function addFilterButton() {
     if (filterButton) {
       filterButton.remove();
@@ -363,16 +372,24 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault();
       const selectedCategory = document.getElementById("categoryFilter").value;
       filterAttractions(selectedCategory);
-      $("#filterModal").modal("hide");
+
+      const filterModal = document.getElementById("filterModal");
+      const modal = bootstrap.Modal.getInstance(filterModal);
+      modal.hide();
     });
+
   document
     .querySelector(".btn-secondary")
     .addEventListener("click", function (event) {
       event.preventDefault();
       document.getElementById("categoryFilter").value = "all";
       filterAttractions("all");
-      $("#filterModal").modal("hide");
+
+      const filterModal = document.getElementById("filterModal");
+      const modal = bootstrap.Modal.getInstance(filterModal);
+      modal.hide();
     });
+
   function filterAttractions(category) {
     placeMarkers.forEach((marker) => {
       const kinds = marker.options.kinds;
@@ -382,6 +399,7 @@ document.addEventListener("DOMContentLoaded", function () {
         map.removeLayer(marker);
       }
     });
+    currentFilter = category;
   }
   function fetchCountryName(lat, lng) {
     const url = "libs/php/nearbyPlaces.php";
@@ -428,6 +446,9 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         const countrySelect = document.getElementById("countrySelect");
+        countrySelect.innerHTML = "";
+        data.countries.sort((a, b) => a.name.localeCompare(b.name));
+
         data.countries.forEach((country) => {
           let option = document.createElement("option");
           option.value = country.iso;
@@ -537,22 +558,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (countryBorderLayer) {
       map.fitBounds(countryBorderLayer.getBounds());
-
-      // countryBorderLayer.on("mouseover", function () {
-      //   countryBorderLayer.setStyle({
-      //     fillColor: "grey",
-      //     fillOpacity: 0.7,
-      //     weight: 3,
-      //   });
-      // });
-
-      // countryBorderLayer.on("mouseout", function () {
-      //   countryBorderLayer.setStyle({
-      //     fillColor: "transparent",
-      //     fillOpacity: 0.5,
-      //     weight: 2,
-      //   });
-      // });
     }
   }
   function fetchWikipediaInfo(countryName) {
@@ -647,7 +652,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .map(
         (article) => `
             <div class="news-article">
-                <h5><a href="${article.url}" target="_blank">${article.title}</a></h5>
+                <h5>${article.title}</h5>
                 <p>${article.description}</p>
                 <hr>
             </div>
@@ -1084,6 +1089,8 @@ document.addEventListener("DOMContentLoaded", function () {
         );
         passportCountrySelect.innerHTML =
           "<option value='' disabled selected>Select a country</option>";
+        data.countries.sort((a, b) => a.name.localeCompare(b.name));
+
         data.countries.forEach((country) => {
           let option = document.createElement("option");
           option.value = country.iso;
@@ -1105,6 +1112,8 @@ document.addEventListener("DOMContentLoaded", function () {
         );
         destinationCountrySelect.innerHTML =
           "<option value='' disabled selected>Select a country</option>";
+        data.countries.sort((a, b) => a.name.localeCompare(b.name));
+
         data.countries.forEach((country) => {
           let option = document.createElement("option");
           option.value = country.iso;

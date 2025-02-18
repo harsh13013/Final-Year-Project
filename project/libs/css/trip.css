@@ -3,8 +3,7 @@ body {
   font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f8f4f0;
-  color: #333;
+  background: rgba(15, 12, 41, 0.9);
 }
 
 header {
@@ -12,50 +11,53 @@ header {
   top: 0;
   left: 0;
   width: 100%;
+  height: 70px;
   padding: 15px 80px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #d7ccc8;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(15, 12, 41, 0.9);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   z-index: 100;
+  backdrop-filter: blur(10px);
 }
 
-.head {
+.logo-container {
   display: flex;
   align-items: center;
-  background-color: #d7ccc8;
-  padding: 5px 10px;
-  border-radius: 5px;
+  background: none;
+}
+
+.logo-container a {
+  text-decoration: none;
 }
 
 .logo {
-  color: #222;
-  font-size: 28px;
-  text-decoration: none;
-  font-weight: 500;
+  font-size: 32px;
   font-style: italic;
+  color: #fffff0;
+  font-weight: 400;
+  margin-right: 10px;
 }
 
 .companyLogo {
-  width: 45px;
-  height: 45px;
-  margin-left: 10px;
-  mix-blend-mode: multiply;
+  width: 90px;
+  height: 90px;
+  margin-right: 10px;
 }
-
 .main {
   max-width: 800px;
   margin: 120px auto;
-  background: #ffffff;
+  background: rgba(15, 12, 41, 0.95);
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  color: #fff; /* Ensure text remains readable */
 }
 
 h1 {
   text-align: center;
-  color: #333;
+  color: #fffff0;
   font-size: 28px;
   font-weight: bold;
   margin-bottom: 20px;
@@ -69,18 +71,23 @@ label {
   display: block;
   margin: 12px 0 6px;
   font-weight: 500;
-  color: #444;
+  color: #fffff0;
 }
 
 input,
-button,
-select {
-  width: 100%;
-  padding: 12px;
+button {
+  width: 95%;
+  padding: 10px;
   margin-bottom: 15px;
-  border: 1px solid #bbb;
-  border-radius: 6px;
-  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+select {
+  width: 98%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 select {
@@ -88,6 +95,7 @@ select {
 }
 
 button {
+  width: 98%;
   background-color: #d7ccc8;
   color: #222;
   font-weight: bold;
@@ -124,6 +132,7 @@ button:hover {
   margin: 5px 0;
   padding: 12px;
   background: #eef;
+  color: rgba(15, 12, 41, 0.9);
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 16px;

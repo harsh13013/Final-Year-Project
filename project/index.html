@@ -3,9 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Country Info</title>
-    <link rel="stylesheet" href="libs/css/style.css" />
-    <link rel="icon" type="image/ico" href="libs/img/logo-Photoroom.png" />
+    <title>TravelTales</title>
+    <link rel="stylesheet" href="libs/css/index.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="libs/img/traveltales_favicon_64x64.png"
+    />
     <link
       href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css"
       rel="stylesheet"
@@ -15,13 +19,13 @@
   <body>
     <header>
       <div class="logo-container">
-        <a href="index.html" class="logo">Country Info</a>
         <img
-          src="libs/img/logo-Photoroom.png"
+          src="libs/img/_TravelTales_-removebg-preview.png"
           alt="Company logo"
           class="companyLogo"
         />
-      </div> 
+        <a href="index.html" class="logo">TravelTales</a>
+      </div>
       <nav>
         <a href="index.html">Home</a>
         <a href="map.html">Map</a>
@@ -37,7 +41,11 @@
 
     <div id="map"></div>
     //Map initialization
-
+    <footer>
+      <p>
+        &copy; 2025 <a href="index.html">TravelTales</a>. All rights reserved.
+      </p>
+    </footer>
     <script>
       //Globe interface
       mapboxgl.accessToken =

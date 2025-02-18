@@ -4,7 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Map</title>
-    <link rel="icon" type="image/ico" href="libs/img/favicon.ico" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="libs/img/traveltales_favicon_64x64.png"
+    />
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -25,7 +29,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.EasyButton/2.4.0/easy-button.css"
     />
 
-    <link rel="stylesheet" href="libs/css/styles.css" />
+    <link rel="stylesheet" href="libs/css/map.css" />
     <script
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA4KGrT4S9X7S2pzdWTh-rku6HSzlMEyGk&libraries=places"
       async
@@ -38,7 +42,14 @@
     </div>
     <div id="navbar" class="navbar navbar-expand-lg">
       <div class="container-fluid">
-        <div class="navbar-brand">Country Info</div>
+        <div class="logo-container">
+          <img
+            src="libs/img/_TravelTales_-removebg-preview.png"
+            alt="Company logo"
+            class="companyLogo"
+          />
+          <a href="index.html" class="logo">TravelTales</a>
+        </div>
         <div class="d-flex flex-grow-1 justify-content-end gap-3">
           <div id="searchContainer" class="control-box">
             <input
@@ -109,7 +120,7 @@
             </h5>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close btn-close-white"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
@@ -161,7 +172,7 @@
             </h5>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close btn-close-white"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
@@ -258,7 +269,7 @@
             <h5 class="modal-title" id="visaModalLabel">Visa Requirements</h5>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close btn-close-white"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
@@ -325,7 +336,7 @@
             </h5>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close btn-close-white"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
@@ -340,7 +351,7 @@
                   <option value="historic">Historic</option>
                   <option value="natural">Natural</option>
                   <option value="religion">Religion</option>
-                  <option value="cinema">Cinema</option>
+                  <option value="cinema">Entertainment</option>
                   <option value="bridges">Bridges</option>
                   <option value="parks">Parks</option>
                 </select>

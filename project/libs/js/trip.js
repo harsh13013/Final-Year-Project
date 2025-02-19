@@ -76,7 +76,8 @@ function displayItinerary(itinerary) {
   const itineraryContainer = document.getElementById("itineraryDays");
   itineraryContainer.innerHTML = "";
 
-  itinerary.forEach((day) => {
+  itinerary.forEach((day) => { 
+    document.getElementById("trip").textContent = "Your Trip";
     const dayDiv = document.createElement("div");
     dayDiv.classList.add("itinerary-day");
     dayDiv.innerHTML = `<h4>Day ${day.day}</h4>`;

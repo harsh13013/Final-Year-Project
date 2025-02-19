@@ -345,7 +345,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
-  let currentFilter = "all";
+  let currentFilters = [];
+
   function addFilterButton() {
     if (filterButton) {
       filterButton.remove();
@@ -366,12 +367,16 @@ document.addEventListener("DOMContentLoaded", function () {
       ],
     }).addTo(map);
   }
+
   document
     .getElementById("filterForm")
     .addEventListener("submit", function (event) {
       event.preventDefault();
-      const selectedCategory = document.getElementById("categoryFilter").value;
-      filterAttractions(selectedCategory);
+      const selectedCategories = Array.from(
+        document.querySelectorAll('input[name="categoryFilter"]:checked')
+      ).map((checkbox) => checkbox.value);
+
+      filterAttractions(selectedCategories);
 
       const filterModal = document.getElementById("filterModal");
       const modal = bootstrap.Modal.getInstance(filterModal);
@@ -382,25 +387,31 @@ document.addEventListener("DOMContentLoaded", function () {
     .querySelector(".btn-secondary")
     .addEventListener("click", function (event) {
       event.preventDefault();
-      document.getElementById("categoryFilter").value = "all";
-      filterAttractions("all");
+      document
+        .querySelectorAll('input[name="categoryFilter"]')
+        .forEach((checkbox) => (checkbox.checked = false));
+      filterAttractions(["all"]);
 
       const filterModal = document.getElementById("filterModal");
       const modal = bootstrap.Modal.getInstance(filterModal);
       modal.hide();
     });
 
-  function filterAttractions(category) {
+  function filterAttractions(categories) {
     placeMarkers.forEach((marker) => {
       const kinds = marker.options.kinds;
-      if (category === "all" || kinds.includes(category)) {
+      if (
+        categories.includes("all") ||
+        categories.some((category) => kinds.includes(category))
+      ) {
         marker.addTo(map);
       } else {
         map.removeLayer(marker);
       }
     });
-    currentFilter = category;
+    currentFilters = categories;
   }
+
   function fetchCountryName(lat, lng) {
     const url = "libs/php/nearbyPlaces.php";
     return fetch(url, {
@@ -608,7 +619,7 @@ document.addEventListener("DOMContentLoaded", function () {
         {
           stateName: "show-wiki",
           icon: "fa-wikipedia-w fa-brands",
-          title: "Show Wikipedia Information",
+          title: "Wikipedia Information",
           onClick: function (btn, map) {
             fetchWikipediaInfo(country.countryName);
           },
@@ -617,50 +628,113 @@ document.addEventListener("DOMContentLoaded", function () {
     }).addTo(map);
   }
   function fetchNews(countryCode) {
+    if (!countryCode || countryCode.trim() === "") {
+      console.error("Invalid country code");
+      return;
+    }
+
+    const newsContent = document.getElementById("newsContent");
+    if (newsContent) {
+      newsContent.innerHTML =
+        '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    }
+
+    const cleanCountryCode = countryCode.trim();
+    console.log("Fetching news for country:", cleanCountryCode);
+
     fetch("libs/php/newsinfo.php", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        country: countryCode,
+        country: cleanCountryCode,
       }),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((result) => {
-        if (result.status.name === "ok") {
+        console.log("News API Response:", result);
+        if (result.status.name === "ok" && Array.isArray(result.data)) {
           displayNews(result.data);
         } else {
-          console.error("Error fetching news:", result.status.description);
+          console.error("Error in news response:", result.status.description);
+          displayNewsError(result.status.description || "Failed to fetch news");
         }
       })
-      .catch((error) => console.error("Error fetching news:", error));
+      .catch((error) => {
+        console.error("Error fetching news:", error);
+        displayNewsError("Failed to load news. Please try again later.");
+      });
   }
 
   function displayNews(newsArticles) {
-    console.log("News Articles:", newsArticles);
+    console.log("Processing news articles:", newsArticles);
 
     const newsContent = document.getElementById("newsContent");
-    newsContent.innerHTML = "";
-
-    if (newsArticles.length === 0) {
-      newsContent.innerHTML = "<p>No news articles found.</p>";
+    if (!newsContent) {
+      console.error("News content element not found");
       return;
     }
 
-    const newsList = newsArticles
-      .map(
-        (article) => `
-            <div class="news-article">
-                <h5>${article.title}</h5>
-                <p>${article.description}</p>
-                <hr>
-            </div>
-        `
-      )
-      .join("");
+    newsContent.innerHTML = "";
 
-    newsContent.innerHTML = newsList;
+    if (!Array.isArray(newsArticles) || newsArticles.length === 0) {
+      newsContent.innerHTML =
+        '<div class="alert alert-info">No news articles found for this country.</div>';
+      return;
+    }
+
+    const articleElements = newsArticles.map((article) => {
+      const title = article.title || "No Title";
+      const description = article.description || "No description available";
+      const source = article.source_id || "Unknown Source";
+      const pubDate = article.pubDate
+        ? new Date(article.pubDate).toLocaleDateString()
+        : "Unknown Date";
+
+      return `
+        <div class="news-article card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">${title}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">${source} • ${pubDate}</h6>
+            <p class="card-text">${description}</p>
+            ${
+              article.link
+                ? `<a href="${article.link}" target="_blank" class="card-link">Read more</a>`
+                : ""
+            }
+          </div>
+        </div>
+      `;
+    });
+
+    newsContent.innerHTML = articleElements.join("");
+
+    const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
+    newsModal.show();
+  }
+
+  function displayNewsError(errorMessage) {
+    const newsContent = document.getElementById("newsContent");
+    if (newsContent) {
+      newsContent.innerHTML = `
+        <div class="alert alert-danger">
+          <strong>Error:</strong> ${errorMessage}
+          <hr>
+          <p>Possible solutions:</p>
+          <ul>
+            <li>Check your API key in the PHP file</li>
+            <li>Verify that the country code is supported by the API</li>
+            <li>Check your network connection</li>
+          </ul>
+        </div>
+      `;
+    }
 
     const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
     newsModal.show();
@@ -955,7 +1029,7 @@ document.addEventListener("DOMContentLoaded", function () {
       case "Clouds":
         return { icon: "fa fa-cloud", colorClass: "icon-cloud" };
       case "Rain":
-        return { icon: "fa fa-tint", colorClass: "icon-rain" };
+        return { icon: "fa fa-cloud-rain", colorClass: "icon-rain" };
       default:
         return { icon: "fa fa-cloud", colorClass: "icon-cloud" };
     }

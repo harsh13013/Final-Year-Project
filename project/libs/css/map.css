@@ -1,44 +1,48 @@
-html,
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
+  font-family: "Futura", sans-serif;
 }
 
 #map {
   position: absolute;
-  top: 60px;
+  top: 140px;
   left: 0;
   width: 100%;
-  height: calc(100% - 60px);
+  height: calc(100% - 140px);
   z-index: 1;
 }
 #navbar {
-  position: relative;
-  z-index: 1000;
+  position: fixed;
+  top: 70px;
+  left: 0;
   width: 100%;
   height: 70px;
   padding: 10px 15px;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  z-index: 900;
+  backdrop-filter: blur(20px);
+}
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  padding: 15px 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: rgba(15, 12, 41, 0.9);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   z-index: 100;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px);
 }
-.logo {
-  font-size: 25px;
-  font-style: italic;
-  color: #fffff0;
-  font-weight: 500;
-  margin-right: 10px;
-}
-.navbar-brand a {
-  text-decoration: none;
-}
+
 .logo-container {
   display: flex;
   align-items: center;
-  background: none;
 }
 
 .logo-container a {
@@ -54,10 +58,45 @@ body {
 }
 
 .companyLogo {
-  width: 90px;
-  height: 90px;
+  width: 92px;
+  height: 73px;
   margin-right: 10px;
 }
+
+nav {
+  display: flex;
+  align-items: center;
+}
+
+nav a {
+  text-decoration: none;
+  color: #fff;
+  font-size: 18px;
+  margin-left: 35px;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 0;
+  height: 2px;
+  background-color: #fffff0;
+  transition: width 0.3s ease;
+}
+
+nav a:hover {
+  color: #fffff0;
+}
+
+nav a:hover::after {
+  width: 100%;
+}
+
 .modal-header {
   background-color: rgba(15, 12, 41, 0.9) !important;
   color: #fffff0 !important;
@@ -73,12 +112,18 @@ body {
 
 .control-box input,
 .control-box select {
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   padding: 8px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.3s ease;
+  background-color: transparent;
+  color: #fffff0;
+}
+
+.control-box input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .control-box input:focus,
@@ -89,4 +134,23 @@ body {
 .control-box input:hover,
 .control-box select:hover {
   border-color: #007bff;
+}
+.control-box select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fffff0'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 22px;
+  padding-right: 30px;
+}
+.icon-sun {
+  color: #f39c12;
+}
+
+.icon-cloud {
+  color: #7f8c8d;
+}
+
+.icon-rain {
+  color: #3498db;
 }

@@ -7,7 +7,7 @@
     <link
       rel="icon"
       type="image/png"
-      href="libs/img/traveltales_favicon_64x64.png"
+      href="libs/img/Screenshot 2025-02-18 at 22.57.33-Photoroom.png"
     />
     <link
       rel="stylesheet"
@@ -40,23 +40,30 @@
     <div id="pre-loader">
       <div class="loader"></div>
     </div>
+    <header>
+      <div class="logo-container">
+        <img
+          src="libs/img/Screenshot_2025-02-18_at_22.57.33-removebg-preview.png"
+          alt="Company logo"
+          class="companyLogo"
+        />
+        <a href="index.html" class="logo">TravelTales</a>
+      </div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="map.html">Map</a>
+        <a href="trip.html">Plan a Trip</a>
+      </nav>
+    </header>
     <div id="navbar" class="navbar navbar-expand-lg">
       <div class="container-fluid">
-        <div class="logo-container">
-          <img
-            src="libs/img/_TravelTales_-removebg-preview.png"
-            alt="Company logo"
-            class="companyLogo"
-          />
-          <a href="index.html" class="logo">TravelTales</a>
-        </div>
-        <div class="d-flex flex-grow-1 justify-content-end gap-3">
+        <div class="d-flex flex-grow-1 justify-content-evenly gap-3">
           <div id="searchContainer" class="control-box">
             <input
               type="text"
               id="placeSearch"
               class="form-control"
-              placeholder="Search for attractions in a country or city"
+              placeholder="Search for attractions"
             />
           </div>
           <div id="selectContainer" class="control-box">
@@ -344,17 +351,89 @@
           <div class="modal-body">
             <form id="filterForm">
               <div class="mb-3">
-                <label for="categoryFilter" class="form-label">Category</label>
-                <select class="form-select" id="categoryFilter">
-                  <option value="all">All</option>
-                  <option value="museum">Museum</option>
-                  <option value="historic">Historic</option>
-                  <option value="natural">Natural</option>
-                  <option value="religion">Religion</option>
-                  <option value="cinema">Entertainment</option>
-                  <option value="bridges">Bridges</option>
-                  <option value="parks">Parks</option>
-                </select>
+                <label class="form-label">Categories</label>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="all"
+                    id="categoryAll"
+                  />
+                  <label class="form-check-label" for="categoryAll">All</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="museum"
+                    id="categoryMuseum"
+                  />
+                  <label class="form-check-label" for="categoryMuseum"
+                    >Museum</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="historic"
+                    id="categoryHistoric"
+                  />
+                  <label class="form-check-label" for="categoryHistoric"
+                    >Historic</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="religion"
+                    id="categoryReligion"
+                  />
+                  <label class="form-check-label" for="categoryReligion"
+                    >Religion</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="cinema"
+                    id="categoryCinema"
+                  />
+                  <label class="form-check-label" for="categoryCinema"
+                    >Entertainment</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="bridges"
+                    id="categoryBridges"
+                  />
+                  <label class="form-check-label" for="categoryBridges"
+                    >Bridges</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categoryFilter"
+                    value="parks"
+                    id="categoryParks"
+                  />
+                  <label class="form-check-label" for="categoryParks"
+                    >Parks</label
+                  >
+                </div>
               </div>
               <button type="submit" class="btn btn-primary">
                 Apply Filters

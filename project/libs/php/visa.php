@@ -1,18 +1,27 @@
 <?php
+
+
+header("Access-Control-Allow-Origin: *"); 
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 
 $executionStartTime = microtime(true);
 
+// Check request method (GET or POST)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $passportCountry = $_GET['passportCountry'] ?? null;
-    $destinationCountry = $_GET['destinationCountry'] ?? null;
+    // Retrieve 'passportCountry' and 'destinationCountry' from query parameters
+    $passportCountry = isset($_GET['passportCountry']) ? $_GET['passportCountry'] : null;
+    $destinationCountry = isset($_GET['destinationCountry']) ? $_GET['destinationCountry'] : null;
 } else {
+    // For POST request (if any), initialize the variables as null
     $passportCountry = null;
     $destinationCountry = null;
 }
 
-
+// If either 'passportCountry' or 'destinationCountry' is missing, return an error response
 if (!$passportCountry || !$destinationCountry) {
     $output = [
         'status' => [
@@ -29,14 +38,16 @@ if (!$passportCountry || !$destinationCountry) {
 
 $url = "https://rough-sun-2523.fly.dev/visa/$passportCountry/$destinationCountry";
 
-
+// Initialize cURL session to make the API request
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification (consider enabling in production)
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  // Return the response as a string
+curl_setopt($ch, CURLOPT_URL, $url); // Set the URL for the API request
 
+// Execute the cURL request and store the response
 $result = curl_exec($ch);
 
+// If there's a cURL error, return the error in the response
 if (curl_errno($ch)) {
     $output = [
         'status' => [
@@ -54,6 +65,7 @@ if (curl_errno($ch)) {
 
 $decode = json_decode($result, true);
 
+
 if (json_last_error() !== JSON_ERROR_NONE) {
     $output = [
         'status' => [
@@ -68,6 +80,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
+// If the decoded data is empty, return an error response
 if (empty($decode)) {
     $output = [
         'status' => [
@@ -82,6 +95,7 @@ if (empty($decode)) {
     exit;
 }
 
+// Prepare the successful response with the decoded data and execution time
 $output = [
     'status' => [
         'code' => "200",
@@ -92,8 +106,10 @@ $output = [
     'data' => $decode
 ];
 
+
 curl_close($ch);
 
+// Return the response as JSON
 header('Content-Type: application/json; charset=UTF-8');
 echo json_encode($output);
 ?>

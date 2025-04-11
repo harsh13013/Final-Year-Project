@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Loads Google Maps API and executes callback once available
   function loadGoogleMapsAPI(callback) {
     if (typeof google !== "undefined") {
       callback();
@@ -33,12 +34,14 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 100);
     }
   }
-  //Map initialization
+
+  // Initializes the map, adds tile layers, and sets up geolocation
   function initMap() {
     map = L.map("map").setView([20, 0], 2);
 
-    loadGoogleMapsAPI(initPlaceSearch);
-    //Map tiles
+    loadGoogleMapsAPI(initPlaceSearch); // Loads Google Places Autocomplete
+
+    // Map tile layers for different views
     const satelliteTileLayer = L.tileLayer(
       "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
       { attribution: "© OpenTopoMap contributors" }
@@ -49,27 +52,17 @@ document.addEventListener("DOMContentLoaded", function () {
       { attribution: "© Carto contributors" }
     );
 
-    const darkLayer = L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      { attribution: "© Carto contributors" }
-    );
-
-    const lightLayer = L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      { attribution: "© Carto" }
-    );
-
+    // Adding default street view layer
     streetLayer.addTo(map);
 
     const baseLayers = {
       "Street View": streetLayer,
       "Satellite View": satelliteTileLayer,
-      "Dark View": darkLayer,
-      "Light View": lightLayer,
     };
 
     L.control.layers(baseLayers).addTo(map);
 
+    // Geolocation setup to center map based on user location
     if (location.protocol === "https:" || location.hostname === "localhost") {
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(success, error);
@@ -80,13 +73,14 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Geolocation is only available over HTTPS or on localhost.");
     }
 
+    // Geolocation success callback
     function success(pos) {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       map.setView([lat, lng], 10);
-
       hidePreLoader();
 
+      // Fetch country details and weather information
       setTimeout(() => {
         fetchCountryName(lat, lng)
           .then((countryData) => {
@@ -100,19 +94,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 500);
     }
 
+    // Geolocation error callback
     function error(err) {
       console.warn("Geolocation error:", err);
       hidePreLoader();
     }
 
-    function error(err) {
-      if (err.code === 1) {
-        alert("Please allow geolocation access");
-      } else {
-        alert("Cannot get current location");
-      }
-    }
-
+    // Initialize Google Places autocomplete for place search input
     function initPlaceSearch() {
       const input = document.getElementById("placeSearch");
       const autocomplete = new google.maps.places.Autocomplete(input, {
@@ -120,6 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fields: ["geometry", "name"],
       });
 
+      // Listen for place selection and update map with new location
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
         if (!place.geometry) {
@@ -145,10 +134,11 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
+    // Fetch and display nearby attractions
     function fetchNearbyAttractions(lat, lng) {
       if (!userInteracted) return;
 
-      const apiKey = "5ae2e3f221c38a28845f05b63374bf6fb80ff0ac34f52dfa39109360";
+      const apiKey = "YOUR_API_KEY"; // API key for fetching nearby attractions
 
       if (!lat || !lng) {
         const center = map.getCenter();
@@ -162,6 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const lon_min = bounds.getSouthWest().lng;
       const lon_max = bounds.getNorthEast().lng;
 
+      // API request to fetch places within the visible map bounds
       const url = `https://api.opentripmap.com/0.1/en/places/bbox?lon_min=${lon_min}&lat_min=${lat_min}&lon_max=${lon_max}&lat_max=${lat_max}&apikey=${apiKey}`;
 
       fetch(url)
@@ -171,6 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
             placeMarkers.forEach((marker) => map.removeLayer(marker));
             placeMarkers = [];
 
+            // Add markers for each nearby place
             data.features.forEach((place) => {
               const { name, xid, kinds } = place.properties;
               const [placeLng, placeLat] = place.geometry.coordinates;
@@ -180,6 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 kinds: kinds,
               });
 
+              // Fetch and display place details on marker click
               marker.on("click", () => {
                 fetch(
                   `https://api.opentripmap.com/0.1/en/places/xid/${xid}?apikey=${apiKey}`
@@ -192,16 +185,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     marker
                       .bindPopup(
                         `<b>${name}</b><br>
-                          ${
-                            imageUrl
-                              ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto;">`
-                              : ""
-                          }
-                          <p>${
-                            details.wikipedia_extracts
-                              ? details.wikipedia_extracts.text
-                              : "No additional information available."
-                          }</p>`
+                        ${
+                          imageUrl
+                            ? `<img src="${imageUrl}" alt="${name}" style="width:100%; height:auto;">`
+                            : ""
+                        }
+                        <p>${
+                          details.wikipedia_extracts
+                            ? details.wikipedia_extracts.text
+                            : "No additional information available."
+                        }</p>`
                       )
                       .openPopup();
                   })
@@ -224,6 +217,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Re-fetch nearby attractions when the map is moved
     map.on("moveend", () => {
       if (userInteracted) {
         fetchNearbyAttractions();
@@ -345,8 +339,10 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+  // Current filters applied on the map
   let currentFilters = [];
 
+  // Adds the filter button to the map
   function addFilterButton() {
     if (filterButton) {
       filterButton.remove();
@@ -359,6 +355,7 @@ document.addEventListener("DOMContentLoaded", function () {
           icon: "fa-filter fa-solid",
           title: "Filter Attractions",
           onClick: function (btn, map) {
+            // Show the filter modal when the button is clicked
             const filterModal = document.getElementById("filterModal");
             const modal = new bootstrap.Modal(filterModal);
             modal.show();
@@ -368,6 +365,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }).addTo(map);
   }
 
+  // Handle the filter form submission and apply selected categories
   document
     .getElementById("filterForm")
     .addEventListener("submit", function (event) {
@@ -376,17 +374,21 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll('input[name="categoryFilter"]:checked')
       ).map((checkbox) => checkbox.value);
 
+      // Apply the filter based on selected categories
       filterAttractions(selectedCategories);
 
+      // Close the modal after filtering
       const filterModal = document.getElementById("filterModal");
       const modal = bootstrap.Modal.getInstance(filterModal);
       modal.hide();
     });
 
+  // Handle the reset filter action when the "Cancel" button is clicked
   document
     .querySelector(".btn-secondary")
     .addEventListener("click", function (event) {
       event.preventDefault();
+      // Uncheck all category filters and reset
       document
         .querySelectorAll('input[name="categoryFilter"]')
         .forEach((checkbox) => (checkbox.checked = false));
@@ -397,21 +399,24 @@ document.addEventListener("DOMContentLoaded", function () {
       modal.hide();
     });
 
+  // Function to filter and display attractions based on selected categories
   function filterAttractions(categories) {
     placeMarkers.forEach((marker) => {
       const kinds = marker.options.kinds;
+      // Add markers to map if they match the selected categories
       if (
         categories.includes("all") ||
         categories.some((category) => kinds.includes(category))
       ) {
         marker.addTo(map);
       } else {
-        map.removeLayer(marker);
+        map.removeLayer(marker); // Remove markers that don't match the filters
       }
     });
     currentFilters = categories;
   }
 
+  // Fetch country name based on latitude and longitude
   function fetchCountryName(lat, lng) {
     const url = "libs/php/nearbyPlaces.php";
     return fetch(url, {
@@ -426,10 +431,10 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
+        // On successful response, fetch country info
         if (data.status.code === "200" && data.data.length > 0) {
           const country = data.data[0].countryName;
           const countryCode = data.data[0].countryCode;
-
           addCurrentLocationToDropdown(country, countryCode);
           return fetchCountryInfo(countryCode, lat, lng);
         } else {
@@ -443,6 +448,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  // Add the current country to the dropdown list
   function addCurrentLocationToDropdown(countryName, countryCode) {
     const countrySelect = document.getElementById("countrySelect");
     const option = document.createElement("option");
@@ -452,14 +458,16 @@ document.addEventListener("DOMContentLoaded", function () {
     countrySelect.appendChild(option);
   }
 
+  // Fetch the list of countries from the server and populate the dropdown
   function fetchCountryList() {
     fetch("libs/php/getCountryList.php")
       .then((response) => response.json())
       .then((data) => {
         const countrySelect = document.getElementById("countrySelect");
-        countrySelect.innerHTML = "";
+        countrySelect.innerHTML = ""; // Clear the dropdown first
         data.countries.sort((a, b) => a.name.localeCompare(b.name));
 
+        // Add each country to the dropdown
         data.countries.forEach((country) => {
           let option = document.createElement("option");
           option.value = country.iso;
@@ -470,6 +478,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => console.error("Error fetching country list:", error));
   }
 
+  // Fetch detailed information about a country based on its code
   function fetchCountryInfo(countryCode, lat = null, lng = null) {
     fetch("libs/php/countryinfo.php", {
       method: "POST",
@@ -487,6 +496,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const capital = country.capital;
           const countryName = country.countryName;
 
+          // Update the map view with country center coordinates if available
           if (lat && lng) {
             updateMap(lat, lng, country, true);
           } else {
@@ -505,16 +515,18 @@ document.addEventListener("DOMContentLoaded", function () {
           updateNewsButton(country);
           updateCurrencyButton(country);
           updateVisaButton(country);
-          addFilterButton();
+          addFilterButton(); // Add the filter button once country info is fetched
         }
       })
       .catch((error) => console.error("Error fetching country info:", error));
   }
 
+  // Fetches border data for a given country code from the server
   function fetchCountryBorder(countryCode) {
     fetch(`libs/php/getCountryBorder.php?country=${countryCode}`)
       .then((response) => response.json())
       .then((data) => {
+        // If there's an error, log it, otherwise display the country border
         if (data.error) {
           console.error("Error fetching border data:", data.error);
         } else {
@@ -524,11 +536,13 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => console.error("Error fetching border data:", error));
   }
 
+  // Displays the border of the country on the map
   function displayCountryBorder(borderData) {
     if (countryBorderLayer) {
-      map.removeLayer(countryBorderLayer);
+      map.removeLayer(countryBorderLayer); // Remove any existing border layer
     }
 
+    // Ensure valid border data is provided
     if (
       !borderData ||
       !borderData.geometry ||
@@ -544,13 +558,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let latLngs;
 
+    // Handling different border types (Polygon and MultiPolygon)
     if (borderType === "Polygon") {
       latLngs = coordinates[0].map((coord) => [coord[1], coord[0]]);
       countryBorderLayer = L.polygon(latLngs, {
-        color: "red",
-        weight: 2,
-        fillColor: "transparent",
-        fillOpacity: 0.5,
+        color: "red", // Border color
+        weight: 2, // Border weight
+        fillColor: "transparent", // Border transparency
+        fillOpacity: 0.5, // Fill opacity
       }).addTo(map);
     } else if (borderType === "MultiPolygon") {
       latLngs = coordinates.map((polygon) =>
@@ -567,10 +582,13 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    // Adjust map view to fit the country border
     if (countryBorderLayer) {
       map.fitBounds(countryBorderLayer.getBounds());
     }
   }
+
+  // Fetches Wikipedia information for the given country name
   function fetchWikipediaInfo(countryName) {
     fetch("libs/php/wikipediaInfo.php", {
       method: "POST",
@@ -584,7 +602,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((result) => {
         if (result.status && result.status.name === "ok") {
-          displayWikipediaInfo(result.data);
+          displayWikipediaInfo(result.data); // Display the fetched Wikipedia information
         } else {
           console.error(
             "Error fetching Wikipedia info:",
@@ -595,6 +613,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => console.error("Error fetching Wikipedia info:", error));
   }
 
+  // Displays the Wikipedia information in a modal
   function displayWikipediaInfo(wikiData) {
     const wikiContent = wikiData.extract_html || "No information available.";
     const wikiUrl = wikiData.wiki_url || "#";
@@ -606,12 +625,13 @@ document.addEventListener("DOMContentLoaded", function () {
     wikiUrlContainer.innerHTML = `<a href="${wikiUrl}" target="_blank" rel="noopener noreferrer">Read more on Wikipedia</a>`;
 
     const wikiModal = new bootstrap.Modal(document.getElementById("wikiModal"));
-    wikiModal.show();
+    wikiModal.show(); // Show the Wikipedia modal
   }
 
+  // Adds a button to the map to fetch Wikipedia information for the selected country
   function updateWikiButton(country) {
     if (wikiButton) {
-      wikiButton.remove();
+      wikiButton.remove(); // Remove existing button if any
     }
 
     wikiButton = L.easyButton({
@@ -621,12 +641,14 @@ document.addEventListener("DOMContentLoaded", function () {
           icon: "fa-wikipedia-w fa-brands",
           title: "Wikipedia Information",
           onClick: function (btn, map) {
-            fetchWikipediaInfo(country.countryName);
+            fetchWikipediaInfo(country.countryName); // Fetch Wikipedia info when clicked
           },
         },
       ],
     }).addTo(map);
   }
+
+  // Fetches news articles related to the country using its country code
   function fetchNews(countryCode) {
     if (!countryCode || countryCode.trim() === "") {
       console.error("Invalid country code");
@@ -636,7 +658,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const newsContent = document.getElementById("newsContent");
     if (newsContent) {
       newsContent.innerHTML =
-        '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>'; // Show loading spinner
     }
 
     const cleanCountryCode = countryCode.trim();
@@ -658,9 +680,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return response.json();
       })
       .then((result) => {
-        console.log("News API Response:", result);
         if (result.status.name === "ok" && Array.isArray(result.data)) {
-          displayNews(result.data);
+          displayNews(result.data); // Display news if valid response
         } else {
           console.error("Error in news response:", result.status.description);
           displayNewsError(result.status.description || "Failed to fetch news");
@@ -672,9 +693,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  // Displays the fetched news articles in the modal
   function displayNews(newsArticles) {
-    console.log("Processing news articles:", newsArticles);
-
     const newsContent = document.getElementById("newsContent");
     if (!newsContent) {
       console.error("News content element not found");
@@ -698,51 +718,53 @@ document.addEventListener("DOMContentLoaded", function () {
         : "Unknown Date";
 
       return `
-        <div class="news-article card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">${title}</h5>
-            <h6 class="card-subtitle mb-2 text-muted">${source} • ${pubDate}</h6>
-            <p class="card-text">${description}</p>
-            ${
-              article.link
-                ? `<a href="${article.link}" target="_blank" class="card-link">Read more</a>`
-                : ""
-            }
-          </div>
+      <div class="news-article card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">${title}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">${source} • ${pubDate}</h6>
+          <p class="card-text">${description}</p>
+          ${
+            article.link
+              ? `<a href="${article.link}" target="_blank" class="card-link">Read more</a>`
+              : ""
+          }
         </div>
-      `;
+      </div>
+    `;
     });
 
     newsContent.innerHTML = articleElements.join("");
 
     const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
-    newsModal.show();
+    newsModal.show(); // Show the news modal
   }
 
+  // Displays an error message if news articles cannot be fetched
   function displayNewsError(errorMessage) {
     const newsContent = document.getElementById("newsContent");
     if (newsContent) {
       newsContent.innerHTML = `
-        <div class="alert alert-danger">
-          <strong>Error:</strong> ${errorMessage}
-          <hr>
-          <p>Possible solutions:</p>
-          <ul>
-            <li>Check your API key in the PHP file</li>
-            <li>Verify that the country code is supported by the API</li>
-            <li>Check your network connection</li>
-          </ul>
-        </div>
-      `;
+      <div class="alert alert-danger">
+        <strong>Error:</strong> ${errorMessage}
+        <hr>
+        <p>Possible solutions:</p>
+        <ul>
+          <li>Check your API key in the PHP file</li>
+          <li>Verify that the country code is supported by the API</li>
+          <li>Check your network connection</li>
+        </ul>
+      </div>
+    `;
     }
 
     const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
-    newsModal.show();
+    newsModal.show(); // Show the error modal
   }
 
+  // Adds a button to the map to fetch news articles for the selected country
   function updateNewsButton(country) {
     if (newsButton) {
-      newsButton.remove();
+      newsButton.remove(); // Remove existing button if any
     }
 
     newsButton = L.easyButton({
@@ -752,7 +774,7 @@ document.addEventListener("DOMContentLoaded", function () {
           icon: "fa-solid fa-newspaper",
           title: "News Articles",
           onClick: function (btn, map) {
-            fetchNews(country.countryCode);
+            fetchNews(country.countryCode); // Fetch news when clicked
           },
         },
       ],
@@ -1034,6 +1056,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return { icon: "fa fa-cloud", colorClass: "icon-cloud" };
     }
   }
+
+  //Update the visa modal
   function updateVisaButton(destinationCountry) {
     if (visaButton) {
       visaButton.remove();
@@ -1095,28 +1119,37 @@ document.addEventListener("DOMContentLoaded", function () {
                         destinationCountry
                       );
 
+                      if (
+                        !visaData ||
+                        typeof visaData !== "object" ||
+                        !visaData.passport ||
+                        !visaData.destination ||
+                        !visaData.category
+                      ) {
+                        document.getElementById("visaResult").innerHTML = `
+                          <p class="text-danger">Visa information is currently unavailable or invalid. Please try again later.</p>
+                        `;
+                        return;
+                      }
+
                       const durationText = visaData.dur
-                        ? `${visaData.dur}`
-                        : "Not valid";
+                        ? visaData.dur
+                        : "Not available";
+
                       const visaResultDiv =
                         document.getElementById("visaResult");
                       visaResultDiv.innerHTML = `
-                      <h5>Visa Requirements</h5>
-                      <p><strong>Passport:</strong> ${visaData.passport.name} (${visaData.passport.code})</p>
-                      <p><strong>Destination:</strong> ${visaData.destination.name} (${visaData.destination.code})</p>
-                      <p><strong>Category:</strong> ${visaData.category.name}</p>
-                      <p><strong>Duration:</strong> ${durationText}</p>
-                    `;
-                      document.getElementById("passportCountrySelect").value =
-                        "";
-                      document.getElementById(
-                        "destinationCountrySelect"
-                      ).value = "";
+                        <h5>Visa Requirements</h5>
+                        <p><strong>Passport:</strong> ${visaData.passport.name} (${visaData.passport.code})</p>
+                        <p><strong>Destination:</strong> ${visaData.destination.name} (${visaData.destination.code})</p>
+                        <p><strong>Category:</strong> ${visaData.category.name}</p>
+                        <p><strong>Duration:</strong> ${durationText}</p>
+                      `;
                     } catch (error) {
                       console.error("Error fetching visa data:", error);
                       document.getElementById("visaResult").innerHTML = `
-                      <p class="text-danger">Error fetching visa requirements: ${error.message}</p>
-                    `;
+                        <p class="text-danger">Error fetching visa requirements: ${error.message}. The service might be temporarily unavailable.</p>
+                      `;
                     }
                   }
                 );
@@ -1129,7 +1162,7 @@ document.addEventListener("DOMContentLoaded", function () {
       ],
     }).addTo(map);
   }
-
+  //Visa Requirement fetch
   async function fetchVisaReq(passportCountry, destinationCountry) {
     const url = `libs/php/visa.php?passportCountry=${passportCountry}&destinationCountry=${destinationCountry}`;
     console.log(`Request URL: ${url}`);
@@ -1153,8 +1186,9 @@ document.addEventListener("DOMContentLoaded", function () {
       throw error;
     }
   }
-
+  //Origin pass
   function fetchPassport() {
+    // Get country list
     fetch("libs/php/getCountryList.php")
       .then((response) => response.json())
       .then((data) => {
@@ -1176,8 +1210,9 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching passport countries:", error);
       });
   }
-
+  //Destination pass
   function fetchDestinationPassport() {
+    // Get country list
     fetch("libs/php/getCountryList.php")
       .then((response) => response.json())
       .then((data) => {
@@ -1216,6 +1251,7 @@ document.addEventListener("DOMContentLoaded", function () {
       map.setView([lat, lon], 5);
     }
   }
+  //Country info modal
   function updateEasyButton(country) {
     if (easyButton) {
       easyButton.remove();

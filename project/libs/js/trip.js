@@ -1,3 +1,4 @@
+// Loads Google Maps API and executes callback once available
 function loadGoogleMapsAPI(callback) {
   if (typeof google !== "undefined") {
     callback();
@@ -11,6 +12,7 @@ function loadGoogleMapsAPI(callback) {
   }
 }
 
+// Initializes Google Places autocomplete for the city input
 function initPlaceSearch() {
   const input = document.getElementById("placeSearch");
   const autocomplete = new google.maps.places.Autocomplete(input, {
@@ -26,6 +28,8 @@ function initPlaceSearch() {
     }
   });
 }
+
+// Fetches attractions for the selected city from a PHP backend
 async function fetchAttractions(city) {
   try {
     const response = await fetch(
@@ -49,6 +53,7 @@ async function fetchAttractions(city) {
   }
 }
 
+// Generates an itinerary by distributing attractions across days based on the pace
 function generateItinerary(city, days, pace) {
   return fetchAttractions(city).then((attractions) => {
     attractions.sort(() => Math.random() - 0.5);
@@ -72,11 +77,12 @@ function generateItinerary(city, days, pace) {
   });
 }
 
+// Displays the generated itinerary in the HTML container
 function displayItinerary(itinerary) {
   const itineraryContainer = document.getElementById("itineraryDays");
   itineraryContainer.innerHTML = "";
 
-  itinerary.forEach((day) => { 
+  itinerary.forEach((day) => {
     document.getElementById("trip").textContent = "Your Trip";
     const dayDiv = document.createElement("div");
     dayDiv.classList.add("itinerary-day");
@@ -100,6 +106,8 @@ function displayItinerary(itinerary) {
     itineraryContainer.appendChild(dayDiv);
   });
 }
+
+// Handles form submission to generate and display the itinerary
 document.getElementById("trip-form").addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -117,4 +125,5 @@ document.getElementById("trip-form").addEventListener("submit", (event) => {
   });
 });
 
+// Loads Google Maps API and initializes place search
 loadGoogleMapsAPI(initPlaceSearch);

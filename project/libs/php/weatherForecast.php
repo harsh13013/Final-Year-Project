@@ -1,4 +1,5 @@
 <?php
+// lat lon parameters
 if (isset($_POST['lat']) && isset($_POST['lon'])) {
     $lat = $_POST['lat'];
     $lon = $_POST['lon'];
